@@ -11,6 +11,12 @@ Default values:
 
 You can change the company name by using the `--companyName` argument.
 
+# Requirements
+pyopenssl must be installed. To install:
+```bash
+$ python3 -m pip install pyopenssl
+```
+
 # Help
 ```bash
 $ python3 generate-certificate.py -h
