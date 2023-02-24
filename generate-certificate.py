@@ -17,7 +17,6 @@ scriptVersion = "0.01"
 def parseArguments():
     """Create argument options and parse through them to determine what to do with script."""
     # Instantiate the parser
-    global scriptVersion
     parser = argparse.ArgumentParser(description='Certificate Generation v' + scriptVersion)
 
     # Optional arguments
