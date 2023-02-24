@@ -35,7 +35,6 @@ def parseArguments():
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
 
-
     global args
     args = parser.parse_args()
 
@@ -51,7 +50,7 @@ def certificateMetaData():
 
     certificateInfo["RootCA"] = {
         "CN": args.companyName + " Root CA",
-        "companyName": args.companyName, 
+        "companyName": args.companyName,
         "organizationalUnit": "Client Authentication CA",
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
@@ -80,7 +79,6 @@ def certificateMetaData():
     }
 
     return certificateInfo
-
 
 def generatePassphrase(__passwordLength):
     """Generate a random password based on the length supplied."""
@@ -111,11 +109,11 @@ def removeAllCertsAndKeys():
         os.remove(iFile)
 
 def printDisclaimer():
+    """Disclaimer for using the certificates."""
     print("----------------------------------------------------------------------------")
     print("DISCLAIMER:")
     print("These files are not meant for production environments. Use at your own risk.")
     print("----------------------------------------------------------------------------")
-
 
 def createRootCA(__certificateMetaData):
     """Create a Root CA with the information from the --companyName argument."""
@@ -145,11 +143,13 @@ def createRootCA(__certificateMetaData):
     printDisclaimer()
 
     # Write the public key to file.
-    open(__certificateMetaData["RootCA"]["rootCAPublicKey"],"wt").write(publicRootCACertPEM.decode("utf-8"))
+    with open(__certificateMetaData["RootCA"]["rootCAPublicKey"],"wt") as f_rootCAPublicKey:
+        f_rootCAPublicKey.write(publicRootCACertPEM.decode("utf-8"))
     print(f"Root CA certificate filename - {__certificateMetaData['RootCA']['rootCAPublicKey']}")
 
     # Write the private key to file.
-    open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "wt").write(privateRootCAKeyPEM.decode("utf-8") )
+    with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "wt") as f_rootCAPrivateKey:
+        f_rootCAPrivateKey.write(privateRootCAKeyPEM.decode("utf-8"))
     print(f"Root CA private key filename - {__certificateMetaData['RootCA']['rootCAPrivateKey']}")
 
     if args.generatePKCS12:
@@ -190,7 +190,8 @@ def createClientCertificate(__certificateMetaData):
     printDisclaimer()
 
     # Output the private key to file.
-    open(__certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"],"wt").write(clientCertificateKeyPEM.decode("utf-8"))
+    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"],"wt") as f_clientCertificatePrivateKey:
+        f_clientCertificatePrivateKey.write(clientCertificateKeyPEM.decode("utf-8"))
     print(f"Client certificate private key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
 
     # Create the Certificate Signing Request
@@ -199,8 +200,6 @@ def createClientCertificate(__certificateMetaData):
     clientCsr.get_subject().OU = __certificateMetaData["ClientAuthentication"]["organizationalUnit"]
     clientCsr.get_subject().CN = __certificateMetaData["ClientAuthentication"]["CN"]
     clientCsr.set_pubkey(clientCertificateKey)
-
-
 
     with open(__certificateMetaData["RootCA"]["rootCAPublicKey"]) as rootCACertFile:
         rootCAcertPEM = rootCACertFile.read()
@@ -233,7 +232,8 @@ def createClientCertificate(__certificateMetaData):
 
 
     # Write the public key to file.
-    open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"],"wt").write(clientCertificateFile.decode("utf-8"))
+    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"],"wt") as f_clientCertificatePublicKey:
+        f_clientCertificatePublicKey.write(clientCertificateFile.decode("utf-8"))
     print(f"Client certificate public key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
 
     if args.generatePKCS12:
@@ -267,6 +267,7 @@ def main():
 
     if args.generateClientCertificate and args.companyName:
         createClientCertificate(myCertMetaData)
+
 
 if __name__ == '__main__':
     try:
