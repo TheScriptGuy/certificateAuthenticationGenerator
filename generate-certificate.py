@@ -138,11 +138,11 @@ def createRootCA(__certificateMetaData):
     rootCAcert.set_issuer(rootCAcert.get_subject())
     rootCAcert.set_pubkey(rootCAPrivateKey)
     rootCAcert.sign(rootCAPrivateKey, __certificateMetaData["RootCA"]["digest"])
-    
+
     # Dump the public certificate
     publicRootCACertPEM = crypto.dump_certificate(crypto.FILETYPE_PEM, rootCAcert)
     privateRootCAKeyPEM = crypto.dump_privatekey(crypto.FILETYPE_PEM, rootCAPrivateKey)
-    
+
     # Print the Disclaimer
     printDisclaimer()
 
@@ -161,9 +161,9 @@ def createRootCA(__certificateMetaData):
         rootCAPKCS12.set_certificate(rootCAcert)
 
         newPassphrase = generatePassphrase(30)
-        
+
         rootCAPKCS12output = rootCAPKCS12.export(newPassphrase.encode("ascii"))
-        
+
         with open(__certificateMetaData['RootCA']['rootCAPKCS12'], 'wb') as rootCAPKCS12file:
             rootCAPKCS12file.write(rootCAPKCS12output)
 
@@ -188,7 +188,7 @@ def createClientCertificate(__certificateMetaData):
     clientCertificateKey = crypto.PKey()
     clientCertificateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["ClientAuthentication"]["rsa_bits"])
     clientCertificateKeyPEM = crypto.dump_privatekey(crypto.FILETYPE_PEM, clientCertificateKey)
-    
+
     # Print the disclaimer.
     printDisclaimer()
 
@@ -231,7 +231,7 @@ def createClientCertificate(__certificateMetaData):
     clientCertificate.add_extensions(clientExtensions)
 
     clientCertificate.sign(rootCAkey, __certificateMetaData["ClientAuthentication"]["digest"])
-    
+
     clientCertificateFile = crypto.dump_certificate(crypto.FILETYPE_PEM, clientCertificate)
 
 
@@ -244,14 +244,14 @@ def createClientCertificate(__certificateMetaData):
         clientCertificatePKCS12 =  crypto.PKCS12()
         clientCertificatePKCS12.set_privatekey(clientCertificateKey)
         clientCertificatePKCS12.set_certificate(clientCertificate)
-        
+
         newPassphrase = generatePassphrase(10)
 
         clientCertificatePKCS12output = clientCertificatePKCS12.export(newPassphrase.encode("ascii"))
 
         with open(__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12'], 'wb') as clientCertificatePKCS12file:
             clientCertificatePKCS12file.write(clientCertificatePKCS12output)
-            
+
         print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
 
 def main():
