@@ -13,7 +13,6 @@ import glob
 
 scriptVersion = "0.01"
 
-
 def parseArguments():
     """Create argument options and parse through them to determine what to do with script."""
     # Instantiate the parser
@@ -34,7 +33,7 @@ def parseArguments():
 
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
-
+    
     global args
     args = parser.parse_args()
 
@@ -238,7 +237,7 @@ def createClientCertificate(__certificateMetaData):
     clientCertificateFile = crypto.dump_certificate(crypto.FILETYPE_PEM, clientCertificate)
 
     # Write the public key to file.
-    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"],"wt") as f_clientCertificatePublicKey:
+    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"], "wt") as f_clientCertificatePublicKey:
         f_clientCertificatePublicKey.write(clientCertificateFile.decode("utf-8"))
     print(f"Client certificate public key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
 
