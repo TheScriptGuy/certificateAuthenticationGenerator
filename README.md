@@ -54,7 +54,7 @@ Root CA private key filename - root-ca-test-inc.key
 ## Generate Root CA with PKCS12 file
 This will create a p12 file with a randomly generated passphrase (outputted to stdout).
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateRootCA -generatePKCS12
+$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateRootCA --generatePKCS12
 ----------------------------------------------------------------------------
 DISCLAIMER:
 These files are not meant for production environments. Use at your own risk.
