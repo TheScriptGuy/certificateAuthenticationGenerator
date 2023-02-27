@@ -1,8 +1,7 @@
-# Formats the json output to get all the egress IPs
-# Author:          TheScriptGuy
-# Last modified:   2023-02-22
-# Version:         0.01
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
+# Author:          TheScriptGuy
+# Last modified:   2023-02-24
+# Version:         0.02
 from OpenSSL import crypto, SSL
 from os.path import join
 import random
@@ -11,48 +10,25 @@ import os
 import argparse
 import glob
 
-scriptVersion = "0.01"
-
-
-def parseArguments():
-    """Create argument options and parse through them to determine what to do with script."""
-    # Instantiate the parser
-    global scriptVersion
-    parser = argparse.ArgumentParser(description='Certificate Generation v' + scriptVersion)
-
-    # Optional arguments
-    parser.add_argument('--companyName', default='ACME Corp',
-                        help='Entity/Company name for the certificates.')
-
-    parser.add_argument('--generateRootCA', action='store_true',
-                        help='Generate the Root CA certificate and key. Uses --companyName in certificate creation.')
-
-    parser.add_argument('--generateClientCertificate', action='store_true',
-                        help='Generate the client certificate to use for client authentication.')
-
-    parser.add_argument('--generatePKCS12', action='store_true',
-                        help='generate a PKCS12 type file.')
-
-    parser.add_argument('--removeAllCertsAndKeys', action='store_true',
-                        help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
-
-
-    global args
-    args = parser.parse_args()
+scriptVersion = "0.02"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
     certificateInfo = {}
 
-    normalizedName = ''.join(filter(lambda x: x.isalpha() or x.isspace(),args.companyName))
+    # Let's normalize the companyName - only leave numbers and letters
+    normalizedName = ''.join(filter(lambda x: x.isalpha() or x.isspace(), args.companyName))
 
+    # Replace spaces with hyphens for Root Certificate Authority.
     rootCAFileName = "root-ca-" + normalizedName.replace(' ', '-').lower()
 
+    # Replace spaces with hyphens for Client Certificate information.
     clientCertificateFileName = "client-cert-" + normalizedName.replace(' ', '-').lower()
 
+    # Root Certificate Authority information. Edit at your own risk.
     certificateInfo["RootCA"] = {
         "CN": args.companyName + " Root CA",
-        "companyName": args.companyName, 
+        "companyName": args.companyName,
         "organizationalUnit": "Client Authentication CA",
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
@@ -63,7 +39,8 @@ def certificateMetaData():
         "rsa_bits": 2048,
         "digest": "sha512",
     }
-
+ 
+    # Client Authentication certificate information. Edit at your own risk.
     certificateInfo["ClientAuthentication"] = {
         "CN": "Endpoint Client Authentication",
         "organizationalUnit": "Client Authentication",
@@ -83,20 +60,51 @@ def certificateMetaData():
     return certificateInfo
 
 
+def parseArguments():
+    """Create argument options and parse through them to determine what to do with script."""
+    # Instantiate the parser
+    parser = argparse.ArgumentParser(description='Certificate Generation v' + scriptVersion)
+
+    # Optional arguments
+    parser.add_argument('--companyName', default='ACME Corp',
+                        help='Entity/Company name for the certificates.')
+
+    parser.add_argument('--generateRootCA', action='store_true',
+                        help='Generate the Root CA certificate and key. Uses --companyName in certificate creation.')
+
+    parser.add_argument('--generateClientCertificate', action='store_true',
+                        help='Generate the client certificate to use for client authentication.')
+
+    parser.add_argument('--generatePKCS12', action='store_true',
+                        help='generate a PKCS12 type file.')
+
+    parser.add_argument('--removeAllCertsAndKeys', action='store_true',
+                        help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
+
+    global args
+    args = parser.parse_args()
+
+
 def generatePassphrase(__passwordLength):
     """Generate a random password based on the length supplied."""
+
+    # Define the valid letters for the password.
     validLetters = "abcdefghijklmnopqrstuvwxyz"
+
+    # Define the valid numbers for the password.
     validNumbers = "0123456789"
 
+    # Combine the list of valid letters and numbers
     validCharacters = validLetters + validNumbers
 
+    # Create a new password based off validCharacters and the length defined by __passwordLength
     newPassphrase = "".join(random.choice(validCharacters) for i in range(__passwordLength))
 
     return newPassphrase
 
+
 def removeAllCertsAndKeys():
     """Removes all files that were generated by this script."""
-
     # Remove .p12 files
     for iFile in glob.glob("*.p12"):
         print(f"Removing file {iFile}")
@@ -112,7 +120,9 @@ def removeAllCertsAndKeys():
         print(f"Removing file {iFile}")
         os.remove(iFile)
 
+
 def printDisclaimer():
+    """Disclaimer for using the certificates."""
     print("----------------------------------------------------------------------------")
     print("DISCLAIMER:")
     print("These files are not meant for production environments. Use at your own risk.")
@@ -138,36 +148,42 @@ def createRootCA(__certificateMetaData):
     rootCAcert.set_issuer(rootCAcert.get_subject())
     rootCAcert.set_pubkey(rootCAPrivateKey)
     rootCAcert.sign(rootCAPrivateKey, __certificateMetaData["RootCA"]["digest"])
-    
+
     # Dump the public certificate
     publicRootCACertPEM = crypto.dump_certificate(crypto.FILETYPE_PEM, rootCAcert)
     privateRootCAKeyPEM = crypto.dump_privatekey(crypto.FILETYPE_PEM, rootCAPrivateKey)
-    
+
     # Print the Disclaimer
     printDisclaimer()
 
     # Write the public key to file.
-    open(__certificateMetaData["RootCA"]["rootCAPublicKey"],"wt").write(publicRootCACertPEM.decode("utf-8"))
+    with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "wt") as f_rootCAPublicKey:
+        f_rootCAPublicKey.write(publicRootCACertPEM.decode("utf-8"))
     print(f"Root CA certificate filename - {__certificateMetaData['RootCA']['rootCAPublicKey']}")
 
     # Write the private key to file.
-    open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "wt").write(privateRootCAKeyPEM.decode("utf-8") )
+    with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "wt") as f_rootCAPrivateKey:
+        f_rootCAPrivateKey.write(privateRootCAKeyPEM.decode("utf-8"))
     print(f"Root CA private key filename - {__certificateMetaData['RootCA']['rootCAPrivateKey']}")
 
     if args.generatePKCS12:
         # Generate a PKCS12 file for the Root CA.
-        rootCAPKCS12 =  crypto.PKCS12()
+        rootCAPKCS12 = crypto.PKCS12()
         rootCAPKCS12.set_privatekey(rootCAPrivateKey)
         rootCAPKCS12.set_certificate(rootCAcert)
 
+        # Create new 30 character passphrase for the Root CA.
         newPassphrase = generatePassphrase(30)
-        
+
+        # Export the Root CA into PKCS12 format using the passphrase from newPassphrase.
         rootCAPKCS12output = rootCAPKCS12.export(newPassphrase.encode("ascii"))
-        
+
+        # Write the PKCS12 file to disk.
         with open(__certificateMetaData['RootCA']['rootCAPKCS12'], 'wb') as rootCAPKCS12file:
             rootCAPKCS12file.write(rootCAPKCS12output)
 
         print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {newPassphrase}")
+
 
 def checkRootCAFilesExist(__certificateMetaData):
     """
@@ -179,21 +195,22 @@ def checkRootCAFilesExist(__certificateMetaData):
         print("Exiting.")
         sys.exit(1)
 
+
 def createClientCertificate(__certificateMetaData):
     """Create the client certificate and sign it from the root CA created from createRootCA()"""
-
     checkRootCAFilesExist(__certificateMetaData)
 
     # Generate the private key for the client authenticate certificate.
     clientCertificateKey = crypto.PKey()
     clientCertificateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["ClientAuthentication"]["rsa_bits"])
     clientCertificateKeyPEM = crypto.dump_privatekey(crypto.FILETYPE_PEM, clientCertificateKey)
-    
+
     # Print the disclaimer.
     printDisclaimer()
 
     # Output the private key to file.
-    open(__certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"],"wt").write(clientCertificateKeyPEM.decode("utf-8"))
+    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"], "wt") as f_clientCertificatePrivateKey:
+        f_clientCertificatePrivateKey.write(clientCertificateKeyPEM.decode("utf-8"))
     print(f"Client certificate private key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
 
     # Create the Certificate Signing Request
@@ -203,12 +220,12 @@ def createClientCertificate(__certificateMetaData):
     clientCsr.get_subject().CN = __certificateMetaData["ClientAuthentication"]["CN"]
     clientCsr.set_pubkey(clientCertificateKey)
 
-
-
+    # Write the Root CA public key to file.
     with open(__certificateMetaData["RootCA"]["rootCAPublicKey"]) as rootCACertFile:
         rootCAcertPEM = rootCACertFile.read()
         rootCAcert = crypto.load_certificate(crypto.FILETYPE_PEM, rootCAcertPEM)
 
+    # Write the Root CA private key to file.
     with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"]) as rootCAKeyFile:
         rootCAkeyPEM = rootCAKeyFile.read()
         rootCAkey = crypto.load_privatekey(crypto.FILETYPE_PEM, rootCAkeyPEM)
@@ -222,55 +239,72 @@ def createClientCertificate(__certificateMetaData):
     clientCertificate.set_subject(clientCsr.get_subject())
     clientCertificate.set_pubkey(clientCsr.get_pubkey())
 
-    # Add extensions to certificate
+    # Create a list of extensions to be added to certificate.
     clientExtensions = [
         crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
         crypto.X509Extension(b"keyUsage", __certificateMetaData["ClientAuthentication"]["extensions"]["keyUsage"], __certificateMetaData["ClientAuthentication"]["extensions"]["keyUsage"].encode('ascii')),
         crypto.X509Extension(b"extendedKeyUsage", True, __certificateMetaData["ClientAuthentication"]["extensions"]["extendedKeyUsage"].encode('ascii'))
     ]
+
+    # Add extensions to certificate.
     clientCertificate.add_extensions(clientExtensions)
 
+    # Sign the certificate based off the Root CA key.
     clientCertificate.sign(rootCAkey, __certificateMetaData["ClientAuthentication"]["digest"])
-    
+
+    # Dump the Client Certificate into PEM format.
     clientCertificateFile = crypto.dump_certificate(crypto.FILETYPE_PEM, clientCertificate)
 
-
     # Write the public key to file.
-    open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"],"wt").write(clientCertificateFile.decode("utf-8"))
+    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"], "wt") as f_clientCertificatePublicKey:
+        f_clientCertificatePublicKey.write(clientCertificateFile.decode("utf-8"))
     print(f"Client certificate public key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
 
     if args.generatePKCS12:
         # Generate a PKCS12 File for the Client Certificate Authenticate.
-        clientCertificatePKCS12 =  crypto.PKCS12()
+        clientCertificatePKCS12 = crypto.PKCS12()
         clientCertificatePKCS12.set_privatekey(clientCertificateKey)
         clientCertificatePKCS12.set_certificate(clientCertificate)
-        
+
+        # Generate a new passphrase to be used for the Client Certificate.
         newPassphrase = generatePassphrase(10)
 
+        # Convert the certificate into PKCS12 format.
         clientCertificatePKCS12output = clientCertificatePKCS12.export(newPassphrase.encode("ascii"))
 
+        # Write the PKCS12 file to disk.
         with open(__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12'], 'wb') as clientCertificatePKCS12file:
             clientCertificatePKCS12file.write(clientCertificatePKCS12output)
-            
+
         print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
+
 
 def main():
     """The main definition."""
-
     # Parse arguments for the script.
     parseArguments()
 
+    # Check to see if we need to remove all certificates, private keys, and PKCS12 formatted files.
     if args.removeAllCertsAndKeys:
         removeAllCertsAndKeys()
         sys.exit(0)
 
+    # Setup the template for the certificate structure for both Root CA and Client Certificate 
     myCertMetaData = certificateMetaData()
 
+    # Adding logic handling for when only --companyName is passed.
+    if args.companyName and not (args.generateRootCA or args.generateClientCertificate):
+        print("Missing --generateRootCA or --generateClientCertificate Argument.")
+        sys.exit(1)
+
+    # Check to see if Root CA needs to be generated.
     if args.generateRootCA and args.companyName:
         createRootCA(myCertMetaData)
 
+    # Check to see if Client Certificate needs to be generated.
     if args.generateClientCertificate and args.companyName:
         createClientCertificate(myCertMetaData)
+
 
 if __name__ == '__main__':
     try:

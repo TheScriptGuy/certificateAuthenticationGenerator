@@ -4,9 +4,9 @@ This script is meant to help with the easy creation of a Root Certificate Author
 Default values:
 * The company name is assumed to be `ACME Corp`.
 * The certificates are valid by default for `1 year`.
-* Root CA uses 2048 bits.
+* Root CA uses `2048` bits.
 * Root CA uses `sha512` digest.
-* Client certificate uses 2048 bits.
+* Client certificate uses `2048` bits.
 * Client Certificate uses `sha256` digest.
 
 You can change the company name by using the `--companyName` argument.
@@ -22,7 +22,7 @@ $ python3 -m pip install pyopenssl
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v0.01
+Certificate Generation v0.02
 
 options:
   -h, --help            show this help message and exit
