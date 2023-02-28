@@ -158,6 +158,9 @@ If you'd like to edit how the certificates are generated, you can edit this dict
         "notAfter": 31536000,
         "rsa_bits": 2048,
         "digest": "sha512",
+        "extensions": {
+            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+        }
     }
 
     certificateInfo["ClientAuthentication"] = {
