@@ -22,7 +22,7 @@ $ python3 -m pip install pyopenssl
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v0.05
+Certificate Generation v0.06
 
 options:
   -h, --help            show this help message and exit
@@ -146,36 +146,36 @@ My recommendation is to leave the following fields:
 
 If you'd like to edit how the certificates are generated, you can edit this dict within `def certificateMetaData`:
 ```python
-    certificateInfo["RootCA"] = {
-        "CN": args.companyName + " Root CA",
-        "companyName": args.companyName, 
-        "organizationalUnit": "Client Authentication CA",
-        "rootCAFileName": rootCAFileName,
-        "rootCAPublicKey": f"{rootCAFileName}.crt",
-        "rootCAPrivateKey": f"{rootCAFileName}.key",
-        "rootCAPKCS12": f"{rootCAFileName}.p12",
-        "notBefore": 0,
-        "notAfter": 31536000,
-        "rsa_bits": 2048,
-        "digest": "sha512",
-        "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
-        }
+certificateInfo["RootCA"] = {
+    "CN": args.companyName + " Root CA",
+    "companyName": args.companyName, 
+    "organizationalUnit": "Client Authentication CA",
+    "rootCAFileName": rootCAFileName,
+    "rootCAPublicKey": f"{rootCAFileName}.crt",
+    "rootCAPrivateKey": f"{rootCAFileName}.key",
+    "rootCAPKCS12": f"{rootCAFileName}.p12",
+    "notBefore": 0,
+    "notAfter": 31536000,
+    "rsa_bits": 2048,
+    "digest": "sha512",
+    "extensions": {
+        "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
     }
+}
 
-    certificateInfo["ClientAuthentication"] = {
-        "CN": "Endpoint Client Authentication",
-        "organizationalUnit": "Client Authentication",
-        "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
-        "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
-        "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
-        "rsa_bits": 2048,
-        "digest": "sha256",
-        "notBefore": 0,
-        "notAfter": 31536000,
-        "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation",
-            "extendedKeyUsage": "clientAuth"
-        }
+certificateInfo["ClientAuthentication"] = {
+    "CN": "Endpoint Client Authentication",
+    "organizationalUnit": "Client Authentication",
+    "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
+    "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
+    "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
+    "rsa_bits": 2048,
+    "digest": "sha256",
+    "notBefore": 0,
+    "notAfter": 31536000,
+    "extensions": {
+        "keyUsage": "digitalSignature, nonRepudiation",
+        "extendedKeyUsage": "clientAuth"
     }
+}
 ```

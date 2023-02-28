@@ -1,4 +1,7 @@
 # 2022-02-28
+## Version 0.06
+* Amended dict structure to allow for future Elliptic Curve Cryptography (ECC) creations.
+
 ## Version 0.05
 * Created a more restrictive Root CA by default. Root CA will only be allowed to validate certificates used for Client Authentication.
 * Amended the certificate versions for both `Root CA` and `Client Authentication` certificate to be `Version 3`.

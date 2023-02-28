@@ -1,7 +1,7 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
 # Last modified:   2023-02-28
-# Version:         0.05
+# Version:         0.06
 from OpenSSL import crypto, SSL
 from os.path import join
 import random
@@ -10,7 +10,7 @@ import os
 import argparse
 import glob
 
-scriptVersion = "0.05"
+scriptVersion = "0.06"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -36,8 +36,10 @@ def certificateMetaData():
         "rootCAPKCS12": f"{rootCAFileName}.p12",
         "notBefore": 0,
         "notAfter": 31536000,
-        "rsa_bits": 2048,
-        "digest": "sha512",
+        "rsa": {
+            "rsa_bits": 2048,
+            "digest": "sha512",
+        },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
         }
@@ -50,10 +52,12 @@ def certificateMetaData():
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
         "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
-        "rsa_bits": 2048,
-        "digest": "sha256",
         "notBefore": 0,
         "notAfter": 31536000,
+        "rsa": {
+            "rsa_bits": 2048,
+            "digest": "sha256",
+        },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation",
             "extendedKeyUsage": "clientAuth"
@@ -152,7 +156,7 @@ def printWindowsInstallationInstructions(__certificateInfo, __p12Password):
 def createRootCA(__certificateMetaData):
     """Create a Root CA with the information from the --companyName argument."""
     rootCAPrivateKey = crypto.PKey()
-    rootCAPrivateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["RootCA"]["rsa_bits"])
+    rootCAPrivateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["RootCA"]["rsa"]["rsa_bits"])
 
     # Generate a random serial number
     rootSerialNumber = random.getrandbits(64)
@@ -184,7 +188,7 @@ def createRootCA(__certificateMetaData):
         rootCAcert.add_extensions(rootCAExtensions)
 
     # Sign the Root CA certificate to itself.
-    rootCAcert.sign(rootCAPrivateKey, __certificateMetaData["RootCA"]["digest"])
+    rootCAcert.sign(rootCAPrivateKey, __certificateMetaData["RootCA"]["rsa"]["digest"])
 
     # Dump the public certificate
     publicRootCACertPEM = crypto.dump_certificate(crypto.FILETYPE_PEM, rootCAcert)
@@ -239,7 +243,7 @@ def createClientCertificate(__certificateMetaData):
 
     # Generate the private key for the client authenticate certificate.
     clientCertificateKey = crypto.PKey()
-    clientCertificateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["ClientAuthentication"]["rsa_bits"])
+    clientCertificateKey.generate_key(crypto.TYPE_RSA, __certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"])
     clientCertificateKeyPEM = crypto.dump_privatekey(crypto.FILETYPE_PEM, clientCertificateKey)
 
     # Print the disclaimer.
@@ -289,7 +293,7 @@ def createClientCertificate(__certificateMetaData):
     clientCertificate.add_extensions(clientExtensions)
 
     # Sign the certificate based off the Root CA key.
-    clientCertificate.sign(rootCAkey, __certificateMetaData["ClientAuthentication"]["digest"])
+    clientCertificate.sign(rootCAkey, __certificateMetaData["ClientAuthentication"]["rsa"]["digest"])
 
     # Dump the Client Certificate into PEM format.
     clientCertificateFile = crypto.dump_certificate(crypto.FILETYPE_PEM, clientCertificate)
