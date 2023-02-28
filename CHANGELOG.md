@@ -1,9 +1,14 @@
 # 2022-02-28
+## Version 0.05
+* Created a more restrictive Root CA by default. Root CA will only be allowed to validate certificates used for Client Authentication.
+* Amended the certificate versions for both `Root CA` and `Client Authentication` certificate to be `Version 3`.
+
 ## Version 0.04
 * Added Root CA certificate to client authentication .p12 file.
 
 ## Version 0.03
 * Added Windows installation instructions for importing the certificate by using the `--windowsInstallation` argument.
+
 
 # 2022-02-24
 ## Version 0.02

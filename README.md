@@ -22,7 +22,7 @@ $ python3 -m pip install pyopenssl
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v0.04
+Certificate Generation v0.05
 
 options:
   -h, --help            show this help message and exit
@@ -32,6 +32,8 @@ options:
   --generateClientCertificate
                         Generate the client certificate to use for client authentication.
   --generatePKCS12      generate a PKCS12 type file.
+  --nonRestrictiveRootCA
+                        Remove Root CA extensions. USE WITH CAUTION.
   --removeAllCertsAndKeys
                         Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.
   --windowsInstallation
@@ -122,7 +124,7 @@ $ python generate-certificate.py --removeAllCertsAndKeys
 ```
 
 
-# Advanced
+# :closed_lock_with_key: :closed_lock_with_key: :closed_lock_with_key: Advanced :closed_lock_with_key: :closed_lock_with_key: :closed_lock_with_key:
 WARNING - editing this below is at your own risk. There is no error checking by changing these values and the script will throw back an error if they're not properly defined.
 
 My recommendation is to leave the following fields:
@@ -133,6 +135,7 @@ My recommendation is to leave the following fields:
 * `rootCAPublicKey`
 * `rootCAPrivateKey`
 * `rootCAPKCS12`
+* `extensions`
 
 ## Under `ClientAuthentication`
 * `CN`

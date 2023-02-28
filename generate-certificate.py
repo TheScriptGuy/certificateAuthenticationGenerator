@@ -1,7 +1,7 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
 # Last modified:   2023-02-28
-# Version:         0.04
+# Version:         0.05
 from OpenSSL import crypto, SSL
 from os.path import join
 import random
@@ -10,7 +10,7 @@ import os
 import argparse
 import glob
 
-scriptVersion = "0.04"
+scriptVersion = "0.05"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -38,6 +38,9 @@ def certificateMetaData():
         "notAfter": 31536000,
         "rsa_bits": 2048,
         "digest": "sha512",
+        "extensions": {
+            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+        }
     }
 
     # Client Authentication certificate information. Edit at your own risk.
@@ -77,6 +80,9 @@ def parseArguments():
 
     parser.add_argument('--generatePKCS12', action='store_true',
                         help='generate a PKCS12 type file.')
+
+    parser.add_argument('--nonRestrictiveRootCA', action='store_true',
+                        help='Remove Root CA extensions. USE WITH CAUTION.')
 
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
@@ -157,10 +163,27 @@ def createRootCA(__certificateMetaData):
     rootCAcert.get_subject().OU = __certificateMetaData["RootCA"]["organizationalUnit"]
     rootCAcert.get_subject().CN = __certificateMetaData["RootCA"]["CN"]
     rootCAcert.set_serial_number(rootSerialNumber)
+    rootCAcert.set_version(2)
     rootCAcert.gmtime_adj_notBefore(__certificateMetaData["RootCA"]["notBefore"])
     rootCAcert.gmtime_adj_notAfter(__certificateMetaData["RootCA"]["notAfter"])
     rootCAcert.set_issuer(rootCAcert.get_subject())
     rootCAcert.set_pubkey(rootCAPrivateKey)
+
+    """
+    By default, restrictive extensions are always applied.
+    Do not use this option unless absolutely necessary.
+    The idea being that you don't want a Root CA that can sign any type of certificate and
+    create a security problem.
+    """
+    if not args.nonRestrictiveRootCA:
+        rootCAExtensions = [
+            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+            crypto.X509Extension(b"keyUsage", __certificateMetaData["RootCA"]["extensions"]["keyUsage"], __certificateMetaData["RootCA"]["extensions"]["keyUsage"].encode('ascii')),
+        ]
+
+        rootCAcert.add_extensions(rootCAExtensions)
+
+    # Sign the Root CA certificate to itself.
     rootCAcert.sign(rootCAPrivateKey, __certificateMetaData["RootCA"]["digest"])
 
     # Dump the public certificate
@@ -252,12 +275,14 @@ def createClientCertificate(__certificateMetaData):
     clientCertificate.set_issuer(rootCAcert.get_subject())
     clientCertificate.set_subject(clientCsr.get_subject())
     clientCertificate.set_pubkey(clientCsr.get_pubkey())
+    clientCertificate.set_version(2)
 
     # Create a list of extensions to be added to certificate.
     clientExtensions = [
         crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
         crypto.X509Extension(b"keyUsage", __certificateMetaData["ClientAuthentication"]["extensions"]["keyUsage"], __certificateMetaData["ClientAuthentication"]["extensions"]["keyUsage"].encode('ascii')),
         crypto.X509Extension(b"extendedKeyUsage", True, __certificateMetaData["ClientAuthentication"]["extensions"]["extendedKeyUsage"].encode('ascii'))
+
     ]
 
     # Add extensions to certificate.
