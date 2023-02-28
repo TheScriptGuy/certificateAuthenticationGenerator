@@ -1,7 +1,7 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
-# Last modified:   2023-02-24
-# Version:         0.02
+# Last modified:   2023-02-28
+# Version:         0.04
 from OpenSSL import crypto, SSL
 from os.path import join
 import random
@@ -10,7 +10,7 @@ import os
 import argparse
 import glob
 
-scriptVersion = "0.02"
+scriptVersion = "0.04"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -39,7 +39,7 @@ def certificateMetaData():
         "rsa_bits": 2048,
         "digest": "sha512",
     }
- 
+
     # Client Authentication certificate information. Edit at your own risk.
     certificateInfo["ClientAuthentication"] = {
         "CN": "Endpoint Client Authentication",
@@ -80,6 +80,9 @@ def parseArguments():
 
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
+
+    parser.add_argument('--windowsInstallation', action='store_true',
+                        help='Displays the installation instructions for Windows')
 
     global args
     args = parser.parse_args()
@@ -127,6 +130,17 @@ def printDisclaimer():
     print("DISCLAIMER:")
     print("These files are not meant for production environments. Use at your own risk.")
     print("----------------------------------------------------------------------------")
+
+
+def printWindowsInstallationInstructions(__certificateInfo, __p12Password):
+    """Display the installation instructions for Windows."""
+    print("----------------------------------------------------------------------------")
+    print("Windows Installation (from the directory where files are stored):")
+    print("To install Client Authentication certificate into User certificate store (in both cases, click yes to install Root CA as well):")
+    print(f"C:\\>certutil -importpfx -f -user -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
+    print()
+    print("To install certificate into Local Machine certificate store:")
+    print(f"C:\\>certutil -importpfx -f -Enterprise -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
 
 
 def createRootCA(__certificateMetaData):
@@ -264,6 +278,7 @@ def createClientCertificate(__certificateMetaData):
         # Generate a PKCS12 File for the Client Certificate Authenticate.
         clientCertificatePKCS12 = crypto.PKCS12()
         clientCertificatePKCS12.set_privatekey(clientCertificateKey)
+        clientCertificatePKCS12.set_ca_certificates([rootCAcert])
         clientCertificatePKCS12.set_certificate(clientCertificate)
 
         # Generate a new passphrase to be used for the Client Certificate.
@@ -277,6 +292,9 @@ def createClientCertificate(__certificateMetaData):
             clientCertificatePKCS12file.write(clientCertificatePKCS12output)
 
         print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
+
+        if args.windowsInstallation:
+            printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
 
 def main():
