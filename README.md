@@ -22,7 +22,7 @@ $ python3 -m pip install pyopenssl
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v0.06
+Certificate Generation v1.00
 
 options:
   -h, --help            show this help message and exit
