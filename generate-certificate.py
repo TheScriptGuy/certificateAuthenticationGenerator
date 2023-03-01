@@ -1,7 +1,7 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
-# Last modified:   2023-02-28
-# Version:         1.00
+# Last modified:   2023-03-01
+# Version:         1.01
 from os.path import join
 
 from cryptography import x509
@@ -18,7 +18,7 @@ import os
 import argparse
 import glob
 
-scriptVersion = "1.00"
+scriptVersion = "1.01"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -161,6 +161,27 @@ def printWindowsInstallationInstructions(__certificateInfo, __p12Password):
     print(f"C:\\>certutil -importpfx -f -Enterprise -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
 
 
+def generateHash(__hash):
+    """Generate the hashes used for encryption."""
+    hashObj = None
+
+    match __hash:
+        case "sha224":
+            hashObj = hashes.SHA224()
+        case "sha256":
+            hashObj = hashes.SHA256()
+        case "sha384":
+            hashObj = hashes.SHA384()
+        case "sha512":
+            hashObj = hashes.SHA512()
+        case "sha512_224":
+            hashObj = hashes.SHA512_224()
+        case "sha512_256":
+            hashObj = hashes.SHA512_256()
+
+    return hashObj
+
+
 def createRootCA(__certificateMetaData):
     """Create a Root CA with the information from the --companyName argument."""
     rootCAPrivateKey = rsa.generate_private_key(
@@ -213,19 +234,9 @@ def createRootCA(__certificateMetaData):
             x509.BasicConstraints(ca=True, path_length=0), critical=True,
         )
 
-    # Sign the certificate
-    validHashes = {
-        "sha224": hashes.SHA224(),
-        "sha256": hashes.SHA256(),
-        "sha384": hashes.SHA384(),
-        "sha512": hashes.SHA512(),
-        "sha512_224": hashes.SHA512_224(),
-        "sha512_256": hashes.SHA512_256()
-    }
-
     # Sign the certificate.
     rootCACertificate = rootCACertificateBuilder.sign(
-        private_key=rootCAPrivateKey, algorithm=validHashes[__certificateMetaData["RootCA"]["rsa"]["digest"]],
+        private_key=rootCAPrivateKey, algorithm=generateHash(__certificateMetaData["RootCA"]["rsa"]["digest"]),
         backend=default_backend()
     )
 
@@ -260,7 +271,7 @@ def createRootCA(__certificateMetaData):
 
         rootCAPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
             name=__certificateMetaData['RootCA']['companyName'].encode('ascii'),
-            key=rootCAPrivateKey, 
+            key=rootCAPrivateKey,
             cert=rootCACertificate,
             cas=None,
             encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))
@@ -330,7 +341,7 @@ def createClientCertificate(__certificateMetaData):
         rootCAkeyPEM = serialization.load_pem_private_key(f_rootCAKeyFile.read(), password=None)
 
     # Sign the certificate based off the Root CA key.
-    clientAuthenticationCertificate = clientCertificateBuilder.sign(rootCAkeyPEM, hashes.SHA256(), default_backend())
+    clientAuthenticationCertificate = clientCertificateBuilder.sign(rootCAkeyPEM, generateHash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]), default_backend())
 
     clientPublicKey = clientPrivateKey.public_key()
 
@@ -360,18 +371,17 @@ def createClientCertificate(__certificateMetaData):
 
     if args.generatePKCS12:
         # Generate a PKCS12 File for the Client Certificate Authenticate.
-        
+
         # Get the Root CA certificate file
         with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "rb") as f_rootCAKeyFile:
             rootCAPublicKeyPEM = x509.load_pem_x509_certificate(f_rootCAKeyFile.read())
-        print(type(rootCAPublicKeyPEM))
 
         # Create new 30 character passphrase for the Root CA.
         newPassphrase = generatePassphrase(10)
 
         clientAuthenticationPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
             name=__certificateMetaData['RootCA']['companyName'].encode('ascii'),
-            key=clientPrivateKey, 
+            key=clientPrivateKey,
             cert=clientAuthenticationCertificate,
             cas=[rootCAPublicKeyPEM],
             encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))

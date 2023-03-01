@@ -14,7 +14,7 @@ You can change the company name by using the `--companyName` argument.
 # Requirements
 pyopenssl must be installed. To install:
 ```bash
-$ python3 -m pip install pyopenssl
+$ python3 -m pip install cryptography
 ```
 
 # Help
@@ -22,7 +22,7 @@ $ python3 -m pip install pyopenssl
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v1.00
+Certificate Generation v1.01
 
 options:
   -h, --help            show this help message and exit
@@ -146,36 +146,41 @@ My recommendation is to leave the following fields:
 
 If you'd like to edit how the certificates are generated, you can edit this dict within `def certificateMetaData`:
 ```python
-certificateInfo["RootCA"] = {
-    "CN": args.companyName + " Root CA",
-    "companyName": args.companyName, 
-    "organizationalUnit": "Client Authentication CA",
-    "rootCAFileName": rootCAFileName,
-    "rootCAPublicKey": f"{rootCAFileName}.crt",
-    "rootCAPrivateKey": f"{rootCAFileName}.key",
-    "rootCAPKCS12": f"{rootCAFileName}.p12",
-    "notBefore": 0,
-    "notAfter": 31536000,
-    "rsa_bits": 2048,
-    "digest": "sha512",
-    "extensions": {
-        "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+    certificateInfo["RootCA"] = {
+        "CN": args.companyName + " Root CA",
+        "companyName": args.companyName,
+        "organizationalUnit": "Client Authentication CA",
+        "rootCAFileName": rootCAFileName,
+        "rootCAPublicKey": f"{rootCAFileName}.crt",
+        "rootCAPrivateKey": f"{rootCAFileName}.key",
+        "rootCAPKCS12": f"{rootCAFileName}.p12",
+        "notBefore": datetime.datetime.today(),
+        "notAfter": datetime.datetime.today() + datetime.timedelta(seconds=31536000),
+        "rsa": {
+            "rsa_bits": 2048,
+            "digest": "sha512",
+        },
+        "extensions": {
+            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+        }
     }
-}
 
-certificateInfo["ClientAuthentication"] = {
-    "CN": "Endpoint Client Authentication",
-    "organizationalUnit": "Client Authentication",
-    "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
-    "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
-    "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
-    "rsa_bits": 2048,
-    "digest": "sha256",
-    "notBefore": 0,
-    "notAfter": 31536000,
-    "extensions": {
-        "keyUsage": "digitalSignature, nonRepudiation",
-        "extendedKeyUsage": "clientAuth"
+    # Client Authentication certificate information. Edit at your own risk.
+    certificateInfo["ClientAuthentication"] = {
+        "CN": "Endpoint Client Authentication",
+        "organizationalUnit": "Client Authentication",
+        "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
+        "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
+        "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
+        "notBefore": datetime.datetime.today(),
+        "notAfter": datetime.datetime.today() + datetime.timedelta(seconds=31536000),
+        "rsa": {
+            "rsa_bits": 2048,
+            "digest": "sha256",
+        },
+        "extensions": {
+            "keyUsage": "digitalSignature, nonRepudiation",
+            "extendedKeyUsage": "clientAuth"
+        }
     }
-}
 ```

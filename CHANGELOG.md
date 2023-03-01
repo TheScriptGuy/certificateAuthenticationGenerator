@@ -1,6 +1,11 @@
+# 2022-03-01
+## Version 1.01
+* Optimized the way the hashing works within the code.
+
+
 # 2022-02-28
 ## Version 1.00
-* Rewrote the code(!) to use python cryptography instaed of crypto. 
+* Rewrote the code(!) to use python cryptography instead of crypto. 
 
 ## Version 0.06
 * Amended dict structure to allow for future Elliptic Curve Cryptography (ECC) creations.
