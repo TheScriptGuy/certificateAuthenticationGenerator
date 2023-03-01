@@ -1,4 +1,7 @@
 # 2022-03-01
+## Version 1.03
+* Added support for elliptic curve encryption.
+
 ## Version 1.02
 * Fixed minor issue when normalizing the `--companyName` string.
 

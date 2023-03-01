@@ -6,8 +6,14 @@ Default values:
 * The certificates are valid by default for `1 year`.
 * Root CA uses `2048` bits.
 * Root CA uses `sha512` digest.
-* Client certificate uses `2048` bits.
-* Client Certificate uses `sha256` digest.
+* Client Authentication Certificate uses `2048` bits.
+* Client Authentication Certificate uses `sha256` digest.
+
+If `--ecc` argument is present, then the following applies:
+* Root CA uses `secp256r1` encryption
+* Root CA uses `sha512` digest
+* Client Authentication certificate uses `secp256r1` encryption
+* Client Authentication certificate uses `sha256` digest.
 
 You can change the company name by using the `--companyName` argument.
 
@@ -20,9 +26,10 @@ $ python3 -m pip install cryptography
 # Help
 ```bash
 $ python3 generate-certificate.py -h
-usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
+usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12]
+                               [--nonRestrictiveRootCA] [--ecc] [--removeAllCertsAndKeys] [--windowsInstallation]
 
-Certificate Generation v1.02
+Certificate Generation v1.03
 
 options:
   -h, --help            show this help message and exit
@@ -34,6 +41,7 @@ options:
   --generatePKCS12      generate a PKCS12 type file.
   --nonRestrictiveRootCA
                         Remove Root CA extensions. USE WITH CAUTION.
+  --ecc                 Use Elliptic Curves in preference to RSA.
   --removeAllCertsAndKeys
                         Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.
   --windowsInstallation
@@ -146,6 +154,7 @@ My recommendation is to leave the following fields:
 
 If you'd like to edit how the certificates are generated, you can edit this dict within `def certificateMetaData`:
 ```python
+    # Root Certificate Authority information. Edit at your own risk.
     certificateInfo["RootCA"] = {
         "CN": args.companyName + " Root CA",
         "companyName": args.companyName,
@@ -159,6 +168,10 @@ If you'd like to edit how the certificates are generated, you can edit this dict
         "rsa": {
             "rsa_bits": 2048,
             "digest": "sha512",
+        },
+        "ecc": {
+            "curve": "secp256r1",
+            "digest": "sha512"
         },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
@@ -177,6 +190,10 @@ If you'd like to edit how the certificates are generated, you can edit this dict
         "rsa": {
             "rsa_bits": 2048,
             "digest": "sha256",
+        },
+        "ecc": {
+            "curve": "secp256r1",
+            "digest": "sha512"
         },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation",

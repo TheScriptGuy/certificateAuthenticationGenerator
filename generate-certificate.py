@@ -1,13 +1,13 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
 # Last modified:   2023-03-01
-# Version:         1.01
+# Version:         1.03
 from os.path import join
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.x509.oid import NameOID
 
 import datetime
@@ -18,7 +18,7 @@ import os
 import argparse
 import glob
 
-scriptVersion = "1.01"
+scriptVersion = "1.03"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -48,6 +48,10 @@ def certificateMetaData():
             "rsa_bits": 2048,
             "digest": "sha512",
         },
+        "ecc": {
+            "curve": "secp256r1",
+            "digest": "sha512"
+        },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
         }
@@ -65,6 +69,10 @@ def certificateMetaData():
         "rsa": {
             "rsa_bits": 2048,
             "digest": "sha256",
+        },
+        "ecc": {
+            "curve": "secp256r1",
+            "digest": "sha256"
         },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation",
@@ -95,6 +103,9 @@ def parseArguments():
 
     parser.add_argument('--nonRestrictiveRootCA', action='store_true',
                         help='Remove Root CA extensions. USE WITH CAUTION.')
+
+    parser.add_argument('--ecc', action='store_true',
+                        help='Use Elliptic Curves in preference to RSA.')
 
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
@@ -182,13 +193,40 @@ def generateHash(__hash):
     return hashObj
 
 
+def generateCurve(__curve):
+    """Generate the appropriate curve."""
+    curveObj = None
+
+    match  __curve:
+        case "secp256r1":
+            curveObj = ec.SECP256R1()
+        case "secp384r1":
+            curveObj = ec.SECP384R1()
+        case "secp521r1":
+            curveObj = ec.SECP256R1()
+        case "secp224r1":
+            curveObj = ec.SECP224R1()
+        case "secp192r1":
+            curvObj = ec.SECP192R1()
+
+    return curveObj
+
+
 def createRootCA(__certificateMetaData):
     """Create a Root CA with the information from the --companyName argument."""
-    rootCAPrivateKey = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=__certificateMetaData["RootCA"]["rsa"]["rsa_bits"],
-        backend=default_backend()
-    )
+    
+    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
+    if args.ecc:
+        rootCAPrivateKey = ec.generate_private_key(
+            curve=generateCurve(__certificateMetaData["RootCA"]["ecc"]["curve"]),
+            backend=default_backend()
+        )
+    else:
+        rootCAPrivateKey = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=__certificateMetaData["RootCA"]["rsa"]["rsa_bits"],
+            backend=default_backend()
+        )
 
     rootCAPublicKey = rootCAPrivateKey.public_key()
     rootCACertificateBuilder = x509.CertificateBuilder()
@@ -227,6 +265,9 @@ def createRootCA(__certificateMetaData):
         # Add the extensions to the rootCACertificateBuilder object.
         rootCACertificateBuilder = rootCACertificateBuilder.add_extension(
             rootCAKeyUsage, True
+        )
+        rootCACertificateBuilder = rootCACertificateBuilder.add_extension(
+            x509.ExtendedKeyUsage([x509.OID_CLIENT_AUTH]), critical=True
         )
 
     # Apply basic constraints to certificate.
@@ -299,11 +340,18 @@ def createClientCertificate(__certificateMetaData):
     """Create the client certificate and sign it from the root CA created from createRootCA()"""
     checkRootCAFilesExist(__certificateMetaData)
 
-    clientPrivateKey = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=__certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"],
-        backend=default_backend()
-    )
+    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
+    if args.ecc:
+        clientPrivateKey = ec.generate_private_key(
+            curve=generateCurve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
+            backend=default_backend()
+        )
+    else:
+        clientPrivateKey = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=__certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"],
+            backend=default_backend()
+        )
 
     clientPublicKey = clientPrivateKey.public_key()
 
