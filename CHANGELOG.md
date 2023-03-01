@@ -1,4 +1,7 @@
 # 2022-03-01
+## Version 1.02
+* Fixed minor issue when normalizing the `--companyName` string.
+
 ## Version 1.01
 * Optimized the way the hashing works within the code.
 

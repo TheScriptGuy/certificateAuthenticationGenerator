@@ -22,7 +22,7 @@ $ python3 -m pip install cryptography
 $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12] [--removeAllCertsAndKeys]
 
-Certificate Generation v1.01
+Certificate Generation v1.02
 
 options:
   -h, --help            show this help message and exit

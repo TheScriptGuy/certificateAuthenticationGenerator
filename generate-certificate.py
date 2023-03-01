@@ -25,7 +25,7 @@ def certificateMetaData():
     certificateInfo = {}
 
     # Let's normalize the companyName - only leave numbers and letters
-    normalizedName = ''.join(filter(lambda x: x.isalpha() or x.isspace(), args.companyName))
+    normalizedName = ''.join(filter(lambda x: x.isalpha() or x.isspace() or x.isdigit(), args.companyName))
 
     # Replace spaces with hyphens for Root Certificate Authority.
     rootCAFileName = "root-ca-" + normalizedName.replace(' ', '-').lower()
