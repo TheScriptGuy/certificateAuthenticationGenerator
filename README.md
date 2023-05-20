@@ -156,9 +156,16 @@ If you'd like to edit how the certificates are generated, you can edit this dict
 ```python
     # Root Certificate Authority information. Edit at your own risk.
     certificateInfo["RootCA"] = {
-        "CN": args.companyName + " Root CA",
-        "companyName": args.companyName,
-        "organizationalUnit": "Client Authentication CA",
+        "oid": {
+            "CN": args.companyName + " Root CA",
+            "companyName": args.companyName,
+            "organizationalUnit": "Client Authentication CA",
+            "locality": None,
+            "stateOrProvince": None,
+            "organizationName": None,
+            "countryName": None,
+            "domainComponent": [None]
+        },
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
         "rootCAPrivateKey": f"{rootCAFileName}.key",
@@ -180,8 +187,15 @@ If you'd like to edit how the certificates are generated, you can edit this dict
 
     # Client Authentication certificate information. Edit at your own risk.
     certificateInfo["ClientAuthentication"] = {
-        "CN": "Endpoint Client Authentication",
-        "organizationalUnit": "Client Authentication",
+        "oid": {
+            "CN": "Endpoint Client Authentication",
+            "organizationalUnit": "Client Authentication",
+            "locality": None,
+            "stateOrProvince": None,
+            "organizationName": None,
+            "countryName": "US",
+            "domainComponent": [None]
+        },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
         "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
@@ -193,7 +207,7 @@ If you'd like to edit how the certificates are generated, you can edit this dict
         },
         "ecc": {
             "curve": "secp256r1",
-            "digest": "sha512"
+            "digest": "sha256"
         },
         "extensions": {
             "keyUsage": "digitalSignature, nonRepudiation",
