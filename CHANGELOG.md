@@ -1,4 +1,8 @@
-# 2022-03-01
+# 2023-05-20
+## Version 1.04
+* Code changes to align with PEP 8 recommendations - Part 1(?)
+
+# 2023-03-01
 ## Version 1.03
 * Added support for elliptic curve encryption.
 
@@ -9,7 +13,7 @@
 * Optimized the way the hashing works within the code.
 
 
-# 2022-02-28
+# 2023-02-28
 ## Version 1.00
 * Rewrote the code(!) to use python cryptography instead of crypto. 
 
@@ -27,11 +31,11 @@
 * Added Windows installation instructions for importing the certificate by using the `--windowsInstallation` argument.
 
 
-# 2022-02-24
+# 2023-02-24
 ## Version 0.02
 * Fixes - adding logic to handle if only `--companyName` argument is passed without anything else.
 
 
-# 2022-02-22
+# 2023-02-22
 ## Version 0.01
 Initial publication of script.
