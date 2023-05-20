@@ -1,14 +1,18 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
-# Last modified:   2023-03-01
-# Version:         1.03
+# Last modified:   2023-05-19
+# Version:         1.04
 from os.path import join
 
 from cryptography import x509
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
+from cryptography_support import cryptography_support
+
 from cryptography.x509.oid import NameOID
+from typing import Union
 
 import datetime
 
@@ -18,7 +22,8 @@ import os
 import argparse
 import glob
 
-scriptVersion = "1.03"
+scriptVersion = "1.04"
+
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
@@ -35,9 +40,16 @@ def certificateMetaData():
 
     # Root Certificate Authority information. Edit at your own risk.
     certificateInfo["RootCA"] = {
-        "CN": args.companyName + " Root CA",
-        "companyName": args.companyName,
-        "organizationalUnit": "Client Authentication CA",
+        "oid": {
+            "CN": args.companyName + " Root CA",
+            "companyName": args.companyName,
+            "organizationalUnit": "Client Authentication CA",
+            "locality": None,
+            "stateOrProvince": None,
+            "organizationName": None,
+            "countryName": None,
+            "domainComponent": ["lab","local"]
+        },
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
         "rootCAPrivateKey": f"{rootCAFileName}.key",
@@ -59,8 +71,15 @@ def certificateMetaData():
 
     # Client Authentication certificate information. Edit at your own risk.
     certificateInfo["ClientAuthentication"] = {
-        "CN": "Endpoint Client Authentication",
-        "organizationalUnit": "Client Authentication",
+        "oid": {
+            "CN": "Endpoint Client Authentication",
+            "organizationalUnit": "Client Authentication",
+            "locality": None,
+            "stateOrProvince": None,
+            "organizationName": None,
+            "countryName": "US",
+            "domainComponent": ["lab","local"]
+        },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
         "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
@@ -117,7 +136,7 @@ def parseArguments():
     args = parser.parse_args()
 
 
-def generatePassphrase(__passwordLength):
+def generatePassphrase(__passwordLength: int):
     """Generate a random password based on the length supplied."""
 
     # Define the valid letters for the password.
@@ -161,7 +180,10 @@ def printDisclaimer():
     print("----------------------------------------------------------------------------")
 
 
-def printWindowsInstallationInstructions(__certificateInfo, __p12Password):
+def printWindowsInstallationInstructions(
+        __certificateInfo: dict,
+        __p12Password: str
+        ) -> None:
     """Display the installation instructions for Windows."""
     print("----------------------------------------------------------------------------")
     print("Windows Installation (from the directory where files are stored):")
@@ -172,53 +194,110 @@ def printWindowsInstallationInstructions(__certificateInfo, __p12Password):
     print(f"C:\\>certutil -importpfx -f -Enterprise -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
 
 
-def generateHash(__hash):
-    """Generate the hashes used for encryption."""
-    hashObj = None
+def write_private_key_to_file(
+        __private_key: cryptography_support.cryptography_support.private_key_types,
+        __filename: str
+        ) -> bool:
+    """Write the __private_key of a certificate to __filename."""
+    # Assume that we'll be successful when writing to the file.
+    successful_write = True
 
-    match __hash:
-        case "sha224":
-            hashObj = hashes.SHA224()
-        case "sha256":
-            hashObj = hashes.SHA256()
-        case "sha384":
-            hashObj = hashes.SHA384()
-        case "sha512":
-            hashObj = hashes.SHA512()
-        case "sha512_224":
-            hashObj = hashes.SHA512_224()
-        case "sha512_256":
-            hashObj = hashes.SHA512_256()
+    try:
+        with open(__filename, "wb") as f_PrivateKey:
+            f_PrivateKey.write(
+                __private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                )
+            )
+    except:
+        # Could not write to file. 
+        successful_write = False
 
-    return hashObj
+    return successful_write
+
+def write_public_key_to_file(
+        __public_key: cryptography_support.cryptography_support.public_key_types,
+        __filename: str
+        ) -> bool:
+    """Write __public_key of a certificate to __filename."""
+    # Assume that we'll be successful when writing to the file.
+    successful_write = True
+
+    try:
+        with open(__filename, "wb") as f_PublicKey:
+            f_PublicKey.write(
+                __public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                )
+            )
+    except:
+        # Could not write to file. 
+        successful_write = False
+
+    return successful_write
 
 
-def generateCurve(__curve):
-    """Generate the appropriate curve."""
-    curveObj = None
+def write_rootca_pkcs12(
+        __certificateMetaData: dict,
+        __rootCAPrivateKey: cryptography_support.cryptography_support.private_key_types,
+        __rootCACertificate: x509.Certificate
+        ) -> None:
+    """Combine both the __rootCAPrivateKey and __rootCACertificate into pkcs12 file format."""
+    # Create new 30 character passphrase for the Root CA.
+    newPassphrase = generatePassphrase(30)
 
-    match  __curve:
-        case "secp256r1":
-            curveObj = ec.SECP256R1()
-        case "secp384r1":
-            curveObj = ec.SECP384R1()
-        case "secp521r1":
-            curveObj = ec.SECP256R1()
-        case "secp224r1":
-            curveObj = ec.SECP224R1()
-        case "secp192r1":
-            curvObj = ec.SECP192R1()
+    rootCAPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
+        name=__certificateMetaData['RootCA']['oid']['companyName'].encode('ascii'),
+        key=__rootCAPrivateKey,
+        cert=__rootCACertificate,
+        cas=None,
+        encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))
+    )
 
-    return curveObj
+    # Write the PKCS12 file to disk.
+    with open(__certificateMetaData['RootCA']['rootCAPKCS12'], 'wb') as rootCAPKCS12file:
+        rootCAPKCS12file.write(rootCAPKCS12)
+
+    print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {newPassphrase}")
 
 
-def createRootCA(__certificateMetaData):
+def build_name_attribute(
+        certificateAttributes: dict
+    ) -> list:
+    """Build a list of all the x509 named attributes in the supplied dict."""
+    # Create an empty list name_attribute_list
+    name_attribute_list = []
+
+    for item in certificateAttributes['oid']:
+        if certificateAttributes['oid'][item] is not None:
+            match item:
+                case "CN":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.COMMON_NAME, certificateAttributes['oid'][item]))
+                case "companyName":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, certificateAttributes['oid'][item]))
+                case "organizationalUnit":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, certificateAttributes['oid'][item]))
+                case "locality":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.LOCALITY_NAME, certificateAttributes['oid'][item]))
+                case "stateOrProvince":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, certificateAttributes['oid'][item]))
+                case "countryName":
+                    name_attribute_list.append(x509.NameAttribute(NameOID.COUNTRY_NAME, certificateAttributes['oid'][item]))
+                case "domainComponent":
+                    if certificateAttributes['oid'][item] != [None]:
+                        for dc in certificateAttributes['oid'][item]:
+                            name_attribute_list.append(x509.NameAttribute(NameOID.DOMAIN_COMPONENT, dc))
+
+    return name_attribute_list
+
+def createRootCA(__certificateMetaData: dict) -> None:
     """Create a Root CA with the information from the --companyName argument."""
-    
     # First check to see if the --ecc argument was passed. If passed, generate ECC key.
     if args.ecc:
         rootCAPrivateKey = ec.generate_private_key(
-            curve=generateCurve(__certificateMetaData["RootCA"]["ecc"]["curve"]),
+            curve=cryptography_support.cryptography_support.generateCurve(__certificateMetaData["RootCA"]["ecc"]["curve"]),
             backend=default_backend()
         )
     else:
@@ -231,17 +310,11 @@ def createRootCA(__certificateMetaData):
     rootCAPublicKey = rootCAPrivateKey.public_key()
     rootCACertificateBuilder = x509.CertificateBuilder()
 
-    rootCACertificateBuilder = rootCACertificateBuilder.subject_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, __certificateMetaData["RootCA"]["CN"]),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, __certificateMetaData["RootCA"]["companyName"]),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, __certificateMetaData["RootCA"]["organizationalUnit"])
-    ]))
-
-    rootCACertificateBuilder = rootCACertificateBuilder.issuer_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, __certificateMetaData["RootCA"]["CN"]),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, __certificateMetaData["RootCA"]["companyName"]),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, __certificateMetaData["RootCA"]["organizationalUnit"])
-    ]))
+    # Start building the attributes for the Root CA certificate
+    rootCANameAttributes = build_name_attribute(__certificateMetaData["RootCA"])
+    rootCACertificateBuilder = rootCACertificateBuilder.subject_name(x509.Name(rootCANameAttributes))
+    rootCACertificateBuilder = rootCACertificateBuilder.issuer_name(x509.Name(rootCANameAttributes)
+    )
 
     # Generate a random serial number
     rootSerialNumber = random.getrandbits(64)
@@ -258,9 +331,17 @@ def createRootCA(__certificateMetaData):
     create a security problem.
     """
     if not args.nonRestrictiveRootCA:
-        rootCAKeyUsage = x509.KeyUsage(digital_signature=True, key_encipherment=False, key_cert_sign=True,
-                                      key_agreement=False, content_commitment=True, data_encipherment=False,
-                                      crl_sign=False, encipher_only=False, decipher_only=False)
+        rootCAKeyUsage = x509.KeyUsage(
+            digital_signature=True,
+            key_encipherment=False,
+            key_cert_sign=True,
+            key_agreement=False,
+            content_commitment=True,
+            data_encipherment=False,
+            crl_sign=False,
+            encipher_only=False,
+            decipher_only=False
+        )
 
         # Add the extensions to the rootCACertificateBuilder object.
         rootCACertificateBuilder = rootCACertificateBuilder.add_extension(
@@ -277,7 +358,7 @@ def createRootCA(__certificateMetaData):
 
     # Sign the certificate.
     rootCACertificate = rootCACertificateBuilder.sign(
-        private_key=rootCAPrivateKey, algorithm=generateHash(__certificateMetaData["RootCA"]["rsa"]["digest"]),
+        private_key=rootCAPrivateKey, algorithm=cryptography_support.cryptography_support.generateHash(__certificateMetaData["RootCA"]["rsa"]["digest"]),
         backend=default_backend()
     )
 
@@ -285,47 +366,25 @@ def createRootCA(__certificateMetaData):
     printDisclaimer()
 
     # Write private key to file
-    with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "wb") as f_rootCAPrivateKey:
-        f_rootCAPrivateKey.write(
-            rootCAPrivateKey.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption()
-            )
-        )
-    print(f"Root CA private key filename - {__certificateMetaData['RootCA']['rootCAPrivateKey']}")
+    if write_private_key_to_file(rootCAPrivateKey, __certificateMetaData['RootCA']['rootCAPrivateKey']):
+        print(f"Root CA private key filename - {__certificateMetaData['RootCA']['rootCAPrivateKey']}")
+    else:
+        print(f"Error writing to file {__certificateMetaData['RootCA']['rootCAPrivateKey']}")
+        sys.exit(1)
 
     # Write the public key to file.
-    with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "wb") as f_rootCAPublicKey:
-        f_rootCAPublicKey.write(
-            rootCACertificate.public_bytes(
-                encoding=serialization.Encoding.PEM,
-            )
-        )
-    print(f"Root CA certificate filename - {__certificateMetaData['RootCA']['rootCAPublicKey']}")
+    if write_public_key_to_file(rootCACertificate, __certificateMetaData["RootCA"]["rootCAPublicKey"]):
+        print(f"Root CA certificate filename - {__certificateMetaData['RootCA']['rootCAPublicKey']}")
+    else:
+        print(f"Error writing to file {__certificateMetaData['RootCA']['rootCAPublicKey']}")
+        sys.exit(1)
 
     if args.generatePKCS12:
         # Generate a PKCS12 file for the Root CA.
-
-        # Create new 30 character passphrase for the Root CA.
-        newPassphrase = generatePassphrase(30)
-
-        rootCAPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
-            name=__certificateMetaData['RootCA']['companyName'].encode('ascii'),
-            key=rootCAPrivateKey,
-            cert=rootCACertificate,
-            cas=None,
-            encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))
-        )
-
-        # Write the PKCS12 file to disk.
-        with open(__certificateMetaData['RootCA']['rootCAPKCS12'], 'wb') as rootCAPKCS12file:
-            rootCAPKCS12file.write(rootCAPKCS12)
-
-        print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {newPassphrase}")
+        write_rootca_pkcs12(__certificateMetaData, rootCAPrivateKey, rootCACertificate)
 
 
-def checkRootCAFilesExist(__certificateMetaData):
+def checkRootCAFilesExist(__certificateMetaData: dict) -> None:
     """
     This will check to see if the root CA public and private key exist.
     If not, exit with system code 1.
@@ -336,14 +395,83 @@ def checkRootCAFilesExist(__certificateMetaData):
         sys.exit(1)
 
 
-def createClientCertificate(__certificateMetaData):
+def write_client_certificate_pkcs12(
+        __certificateMetaData: dict,
+        __clientPrivateKey: cryptography_support.cryptography_support.private_key_types,
+        __clientAuthenticationCertificate: x509.Certificate
+        ) -> None:
+    """Write the client certificate and Root CA into the PKCS12 file."""
+    # Get the Root CA certificate file
+    with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "rb") as f_rootCAKeyFile:
+        rootCAPublicKeyPEM = x509.load_pem_x509_certificate(f_rootCAKeyFile.read())
+
+    # Create new 30 character passphrase for the Root CA.
+    newPassphrase = generatePassphrase(10)
+
+    # Create the PKCS12 object.
+    clientAuthenticationPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
+        name=__certificateMetaData['RootCA']['oid']['companyName'].encode('ascii'),
+        key=__clientPrivateKey,
+        cert=__clientAuthenticationCertificate,
+        cas=[rootCAPublicKeyPEM],
+        encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))
+    )
+
+    # Write the PKCS12 file to disk.
+    with open(__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12'], 'wb') as f_clientAuthenticationPKCS12file:
+        f_clientAuthenticationPKCS12file.write(clientAuthenticationPKCS12)
+
+    print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
+
+
+def write_client_private_key(
+        __private_key: cryptography_support.cryptography_support.private_key_types,
+        __filename: str
+        ) -> bool:
+    """Writes the client private key to __filename."""
+    successful_write = True
+
+    try:
+        with open(__filename, "wb") as f_clientPrivateKey:
+            f_clientPrivateKey.write(
+                __private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                )
+            )
+    except:
+        successful_write = False
+
+    return successful_write
+
+def write_client_public_key(
+        __public_key: cryptography_support.cryptography_support.public_key_types,
+        __filename: str
+        ) -> bool:
+    successful_write = True
+
+    try:
+        with open(__filename, "wb") as f_clientPublicKey:
+            f_clientPublicKey.write(
+                __public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+            )
+    except:
+        successful_write = False
+
+    return successful_write
+
+def createClientCertificate(__certificateMetaData: dict) -> None:
     """Create the client certificate and sign it from the root CA created from createRootCA()"""
     checkRootCAFilesExist(__certificateMetaData)
 
     # First check to see if the --ecc argument was passed. If passed, generate ECC key.
     if args.ecc:
         clientPrivateKey = ec.generate_private_key(
-            curve=generateCurve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
+            curve=cryptography_support.cryptography_support.generateCurve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
             backend=default_backend()
         )
     else:
@@ -355,18 +483,12 @@ def createClientCertificate(__certificateMetaData):
 
     clientPublicKey = clientPrivateKey.public_key()
 
+    clientNameAttributes = build_name_attribute(__certificateMetaData['ClientAuthentication'])
     clientCertificateBuilder = x509.CertificateBuilder()
-    clientCertificateBuilder = clientCertificateBuilder.subject_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, __certificateMetaData["ClientAuthentication"]["CN"]),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, __certificateMetaData["RootCA"]["companyName"]),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, __certificateMetaData["ClientAuthentication"]["organizationalUnit"])
-    ]))
+    clientCertificateBuilder = clientCertificateBuilder.subject_name(x509.Name(clientNameAttributes))
 
-    clientCertificateBuilder = clientCertificateBuilder.issuer_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, __certificateMetaData["RootCA"]["CN"]),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, __certificateMetaData["RootCA"]["companyName"]),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, __certificateMetaData["RootCA"]["organizationalUnit"])
-    ]))
+    rootCANameAttributes = build_name_attribute(__certificateMetaData['RootCA'])
+    clientCertificateBuilder = clientCertificateBuilder.issuer_name(x509.Name(rootCANameAttributes))
 
     # Generate a random serial number
     clientSerialNumber = random.getrandbits(64)
@@ -389,7 +511,7 @@ def createClientCertificate(__certificateMetaData):
         rootCAkeyPEM = serialization.load_pem_private_key(f_rootCAKeyFile.read(), password=None)
 
     # Sign the certificate based off the Root CA key.
-    clientAuthenticationCertificate = clientCertificateBuilder.sign(rootCAkeyPEM, generateHash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]), default_backend())
+    clientAuthenticationCertificate = clientCertificateBuilder.sign(rootCAkeyPEM, cryptography_support.cryptography_support.generateHash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]), default_backend())
 
     clientPublicKey = clientPrivateKey.public_key()
 
@@ -397,49 +519,22 @@ def createClientCertificate(__certificateMetaData):
     printDisclaimer()
 
     # Client the client private key to file.
-    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"], "wb") as f_clientPrivateKey:
-        f_clientPrivateKey.write(
-            clientPrivateKey.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption()
-            )
-        )
-    print(f"Client certificate private key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
+    if write_client_private_key(clientPrivateKey, __certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"]):
+        print(f"Client certificate private key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
+    else:
+        print(f"Error when writing client private key to {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
+        sys.exit(1)
 
     # Write the client certificate to file.
-    with open(__certificateMetaData["ClientAuthentication"]["clientCertificatePublicKey"], "wb") as f_clientPublicKey:
-        f_clientPublicKey.write(
-            clientPublicKey.public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
-            )
-        )
-    print(f"Client certificate filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
+    if write_client_public_key(clientPublicKey, __certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']):
+        print(f"Client certificate filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
+    else:
+        print(f"Error when writing client public key to {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
+        sys.exit(1)
 
     if args.generatePKCS12:
         # Generate a PKCS12 File for the Client Certificate Authenticate.
-
-        # Get the Root CA certificate file
-        with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "rb") as f_rootCAKeyFile:
-            rootCAPublicKeyPEM = x509.load_pem_x509_certificate(f_rootCAKeyFile.read())
-
-        # Create new 30 character passphrase for the Root CA.
-        newPassphrase = generatePassphrase(10)
-
-        clientAuthenticationPKCS12 = serialization.pkcs12.serialize_key_and_certificates(
-            name=__certificateMetaData['RootCA']['companyName'].encode('ascii'),
-            key=clientPrivateKey,
-            cert=clientAuthenticationCertificate,
-            cas=[rootCAPublicKeyPEM],
-            encryption_algorithm=serialization.BestAvailableEncryption(newPassphrase.encode('ascii'))
-        )
-
-        # Write the PKCS12 file to disk.
-        with open(__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12'], 'wb') as rootCAPKCS12file:
-            rootCAPKCS12file.write(clientAuthenticationPKCS12)
-
-        print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
+        write_client_certificate_pkcs12(__certificateMetaData, clientPrivateKey, clientAuthenticationCertificate)
 
         if args.windowsInstallation:
             printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
@@ -455,7 +550,7 @@ def main():
         removeAllCertsAndKeys()
         sys.exit(0)
 
-    # Setup the template for the certificate structure for both Root CA and Client Certificate 
+    # Setup the template for the certificate structure for both Root CA and Client Certificate.
     myCertMetaData = certificateMetaData()
 
     # Adding logic handling for when only --companyName is passed.
