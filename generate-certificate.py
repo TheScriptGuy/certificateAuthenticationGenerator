@@ -48,7 +48,7 @@ def certificateMetaData():
             "stateOrProvince": None,
             "organizationName": None,
             "countryName": None,
-            "domainComponent": ["lab","local"]
+            "domainComponent": [None]
         },
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
@@ -78,7 +78,7 @@ def certificateMetaData():
             "stateOrProvince": None,
             "organizationName": None,
             "countryName": "US",
-            "domainComponent": ["lab","local"]
+            "domainComponent": [None]
         },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
@@ -212,10 +212,11 @@ def write_private_key_to_file(
                 )
             )
     except:
-        # Could not write to file. 
+        # Could not write to file.
         successful_write = False
 
     return successful_write
+
 
 def write_public_key_to_file(
         __public_key: cryptography_support.cryptography_support.public_key_types,
@@ -233,7 +234,7 @@ def write_public_key_to_file(
                 )
             )
     except:
-        # Could not write to file. 
+        # Could not write to file.
         successful_write = False
 
     return successful_write
@@ -291,6 +292,7 @@ def build_name_attribute(
                             name_attribute_list.append(x509.NameAttribute(NameOID.DOMAIN_COMPONENT, dc))
 
     return name_attribute_list
+
 
 def createRootCA(__certificateMetaData: dict) -> None:
     """Create a Root CA with the information from the --companyName argument."""
@@ -449,6 +451,7 @@ def write_client_public_key(
         __public_key: cryptography_support.cryptography_support.public_key_types,
         __filename: str
         ) -> bool:
+    """Write the client public key to __filename."""
     successful_write = True
 
     try:
