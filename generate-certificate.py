@@ -251,9 +251,10 @@ def createRootCA(__certificateMetaData: dict) -> None:
         )
         if root_ca_passphrase:
             print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {root_ca_passphrase}")
-        
+
             if args.windowsInstallation:
                 printWindowsInstallationInstructions(__certificateMetaData, root_ca_passphrase)
+
 
 def check_root_ca_files_exist(__certificateMetaData: dict) -> None:
     """

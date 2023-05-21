@@ -14,6 +14,7 @@ import glob
 import os
 import random
 
+
 class CryptographyFileOperations:
     """This class is used for all of the file components for private and public key handling."""
 
@@ -35,7 +36,6 @@ class CryptographyFileOperations:
         newPassphrase = "".join(random.choice(validCharacters) for i in range(__passwordLength))
 
         return newPassphrase
-
 
     @staticmethod
     def remove_all_certs_and_keys():
@@ -142,7 +142,7 @@ class CryptographyFileOperations:
         __certificateMetaData: dict,
         __clientPrivateKey: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
         __clientAuthenticationCertificate: x509.Certificate
-        ) -> str:
+    ) -> str:
         """Write the client certificate and Root CA into the PKCS12 file."""
         # Get the Root CA certificate file
         with open(__certificateMetaData["RootCA"]["rootCAPublicKey"], "rb") as f_rootCAKeyFile:
@@ -166,6 +166,7 @@ class CryptographyFileOperations:
 
         return newPassphrase
 
+    @staticmethod
     def write_client_private_key(
             __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
             __filename: str
@@ -194,7 +195,7 @@ class CryptographyFileOperations:
 
         return successful_write
 
-
+    @staticmethod
     def write_client_public_key(
             __public_key: CryptographySupport.CryptographySupport.PUBLIC_KEY_TYPES,
             __filename: str
@@ -223,4 +224,4 @@ class CryptographyFileOperations:
         return successful_write
 
     def __init__(self):
-    	self.initialized = True
+        self.initialized = True

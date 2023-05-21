@@ -5,7 +5,7 @@
 
 from typing import Union
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 from cryptography import x509
 
