@@ -29,7 +29,7 @@ $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12]
                                [--nonRestrictiveRootCA] [--ecc] [--removeAllCertsAndKeys] [--windowsInstallation]
 
-Certificate Generation v1.04
+Certificate Generation v1.05
 
 options:
   -h, --help            show this help message and exit

@@ -1,4 +1,7 @@
 # 2023-05-20
+## Version 1.05
+* Adjusting code to be more classy!
+
 ## Version 1.04
 * Code changes to align with PEP 8 recommendations - Part 1(?)
 
