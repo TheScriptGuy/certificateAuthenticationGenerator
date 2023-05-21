@@ -6,8 +6,6 @@
 from typing import Union
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurve
-from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import NameOID
 from cryptography import x509
 
@@ -20,7 +18,7 @@ class CryptographySupport:
     CLASS_VERSION = "0.01"
 
     @staticmethod
-    def generate_hash(__hash: str) -> HashAlgorithm:
+    def generate_hash(__hash: str) -> hashes.HashAlgorithm:
         """
         Generate the hashes used for encryption.
 
@@ -48,7 +46,7 @@ class CryptographySupport:
         return hash_obj
 
     @staticmethod
-    def generate_curve(__curve: str) -> EllipticCurve:
+    def generate_curve(__curve: str) -> ec.EllipticCurve:
         """
         Generate the appropriate curve.
 
