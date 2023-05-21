@@ -218,9 +218,6 @@ def write_private_key_to_file(
     except IOError as e:
         print(f"An I/O error occurred: {e}")
         successful_write = False
-    except OSError as e:
-        print(f"An OS error occurred: {e}")
-        successful_write = False
 
     return successful_write
 
@@ -249,10 +246,6 @@ def write_public_key_to_file(
     except IOError as e:
         print(f"An I/O error occurred: {e}")
         successful_write = False
-    except OSError as e:
-        print(f"An OS error occurred: {e}")
-        successful_write = False
-
 
     return successful_write
 
@@ -459,9 +452,6 @@ def write_client_private_key(
     except IOError as e:
         print(f"An I/O error occurred: {e}")
         successful_write = False
-    except OSError as e:
-        print(f"An OS error occurred: {e}")
-        successful_write = False
 
     return successful_write
 
@@ -488,9 +478,6 @@ def write_client_public_key(
         successful_write = False
     except IOError as e:
         print(f"An I/O error occurred: {e}")
-        successful_write = False
-    except OSError as e:
-        print(f"An OS error occurred: {e}")
         successful_write = False
 
     return successful_write
