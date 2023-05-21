@@ -273,6 +273,8 @@ def write_rootca_pkcs12(
 
     print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {newPassphrase}")
 
+    if args.windowsInstallation:
+        printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
 def createRootCA(__certificateMetaData: dict) -> None:
     """Create a Root CA with the information from the --companyName argument."""
@@ -404,6 +406,8 @@ def write_client_certificate_pkcs12(
 
     print(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {newPassphrase}")
 
+    if args.windowsInstallation:
+        printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
 def write_client_private_key(
         __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
@@ -536,9 +540,6 @@ def createClientCertificate(__certificateMetaData: dict) -> None:
     if args.generatePKCS12:
         # Generate a PKCS12 File for the Client Certificate Authenticate.
         write_client_certificate_pkcs12(__certificateMetaData, clientPrivateKey, clientAuthenticationCertificate)
-
-        if args.windowsInstallation:
-            printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
 
 def main():
