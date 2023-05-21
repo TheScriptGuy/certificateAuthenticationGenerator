@@ -342,7 +342,8 @@ def createRootCA(__certificateMetaData: dict) -> None:
 
     # Sign the certificate.
     rootCACertificate = rootCACertificateBuilder.sign(
-        private_key=rootCAPrivateKey, algorithm=CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["RootCA"]["rsa"]["digest"]),
+        private_key=rootCAPrivateKey,
+        algorithm=CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["RootCA"]["rsa"]["digest"]),
         backend=default_backend()
     )
 
@@ -516,9 +517,9 @@ def createClientCertificate(__certificateMetaData: dict) -> None:
 
     # Sign the certificate based off the Root CA key.
     clientAuthenticationCertificate = clientCertificateBuilder.sign(
-        rootCAkeyPEM,
-        CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]),
-        default_backend()
+        private_key=rootCAkeyPEM,
+        algorithm=CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]),
+        backend=default_backend()
     )
 
     clientPublicKey = clientPrivateKey.public_key()
