@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import NameOID
 from cryptography import x509
 
+
 class CryptographySupport:
     """What crypto are we supporting within this script."""
 
@@ -72,35 +73,8 @@ class CryptographySupport:
 
         return curve_obj
 
-    #def build_name_attribute(
-    #        certificateAttributes: dict
-    #    ) -> list:
-    #    """Build a list of all the x509 named attributes in the supplied dict."""
-    #    # Create an empty list name_attribute_list
-    #    name_attribute_list = []
-    #
-    #    for item in certificateAttributes['oid']:
-    #        if certificateAttributes['oid'][item] is not None:
-    #            match item:
-    #                case "CN":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.COMMON_NAME, certificateAttributes['oid'][item]))
-    #                case "companyName":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, certificateAttributes['oid'][item]))
-    #                case "organizationalUnit":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, certificateAttributes['oid'][item]))
-    #                case "locality":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.LOCALITY_NAME, certificateAttributes['oid'][item]))
-    #                case "stateOrProvince":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, certificateAttributes['oid'][item]))
-    #                case "countryName":
-    #                    name_attribute_list.append(x509.NameAttribute(NameOID.COUNTRY_NAME, certificateAttributes['oid'][item]))
-    #                case "domainComponent":
-    #                    if certificateAttributes['oid'][item] != [None]:
-    #                        for dc in certificateAttributes['oid'][item]:
-    #                            name_attribute_list.append(x509.NameAttribute(NameOID.DOMAIN_COMPONENT, dc))
-    #
-    #    return name_attribute_list
 
+    @staticmethod
     def build_name_attribute(certificateAttributes: dict) -> list:
         """Build a list of all the x509 named attributes in the supplied dict."""
         # Mapping for OID names to their respective OIDs
@@ -130,4 +104,3 @@ class CryptographySupport:
     def __init__(self):
         """Initialize the class."""
         self.initialized = True
-

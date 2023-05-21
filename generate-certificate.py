@@ -137,7 +137,6 @@ def parseArguments():
 
 def generatePassphrase(__passwordLength: int):
     """Generate a random password based on the length supplied."""
-
     # Define the valid letters for the password.
     validLetters = "abcdefghijklmnopqrstuvwxyz"
 
@@ -284,8 +283,7 @@ def createRootCA(__certificateMetaData: dict) -> None:
     # Start building the attributes for the Root CA certificate
     rootCANameAttributes = CryptographySupport.CryptographySupport.build_name_attribute(__certificateMetaData["RootCA"])
     rootCACertificateBuilder = rootCACertificateBuilder.subject_name(x509.Name(rootCANameAttributes))
-    rootCACertificateBuilder = rootCACertificateBuilder.issuer_name(x509.Name(rootCANameAttributes)
-    )
+    rootCACertificateBuilder = rootCACertificateBuilder.issuer_name(x509.Name(rootCANameAttributes))
 
     # Generate a random serial number
     rootSerialNumber = random.getrandbits(64)
@@ -416,6 +414,7 @@ def write_client_private_key(
 
     return successful_write
 
+
 def write_client_public_key(
         __public_key: CryptographySupport.CryptographySupport.PUBLIC_KEY_TYPES,
         __filename: str
@@ -435,6 +434,7 @@ def write_client_public_key(
         successful_write = False
 
     return successful_write
+
 
 def createClientCertificate(__certificateMetaData: dict) -> None:
     """Create the client certificate and sign it from the root CA created from createRootCA()"""
@@ -483,7 +483,11 @@ def createClientCertificate(__certificateMetaData: dict) -> None:
         rootCAkeyPEM = serialization.load_pem_private_key(f_rootCAKeyFile.read(), password=None)
 
     # Sign the certificate based off the Root CA key.
-    clientAuthenticationCertificate = clientCertificateBuilder.sign(rootCAkeyPEM, CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]), default_backend())
+    clientAuthenticationCertificate = clientCertificateBuilder.sign(
+        rootCAkeyPEM, 
+        CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]),
+        default_backend()
+    )
 
     clientPublicKey = clientPrivateKey.public_key()
 
