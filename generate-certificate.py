@@ -516,7 +516,7 @@ def createClientCertificate(__certificateMetaData: dict) -> None:
 
     # Sign the certificate based off the Root CA key.
     clientAuthenticationCertificate = clientCertificateBuilder.sign(
-        rootCAkeyPEM, 
+        rootCAkeyPEM,
         CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]),
         default_backend()
     )

@@ -73,7 +73,6 @@ class CryptographySupport:
 
         return curve_obj
 
-
     @staticmethod
     def build_name_attribute(certificateAttributes: dict) -> list:
         """Build a list of all the x509 named attributes in the supplied dict."""
