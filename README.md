@@ -29,7 +29,7 @@ $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12]
                                [--nonRestrictiveRootCA] [--ecc] [--removeAllCertsAndKeys] [--windowsInstallation]
 
-Certificate Generation v1.05
+Certificate Generation v1.06
 
 options:
   -h, --help            show this help message and exit
@@ -193,7 +193,7 @@ If you'd like to edit how the certificates are generated, you can edit this dict
             "locality": None,
             "stateOrProvince": None,
             "organizationName": None,
-            "countryName": "US",
+            "countryName": None,
             "domainComponent": [None]
         },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",

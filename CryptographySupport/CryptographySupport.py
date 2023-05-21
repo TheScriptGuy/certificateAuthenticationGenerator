@@ -1,7 +1,7 @@
-# Description:           What types of cryptography are we going to support
+# Description:           Cryptography support
 # Author:                TheScriptGuy
 # Last modified:         2023-05-20
-# Version 0.01
+# Version:               0.01
 
 from typing import Union
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
