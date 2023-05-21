@@ -421,28 +421,6 @@ def write_client_private_key(
                     encryption_algorithm=serialization.NoEncryption()
                 )
             )
-    except:
-        successful_write = False
-
-    return successful_write
-
-
-def write_client_private_key(
-        __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
-        __filename: str
-        ) -> bool:
-    """Writes the client private key to __filename."""
-    successful_write = True
-
-    try:
-        with open(__filename, "wb") as f_clientPrivateKey:
-            f_clientPrivateKey.write(
-                __private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
-                )
-            )
     except PermissionError:
         print("You don't have the permissions to write to this file.")
         successful_write = False
