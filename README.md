@@ -20,7 +20,7 @@ You can change the company name by using the `--companyName` argument.
 # Requirements
 pyopenssl must be installed. To install:
 ```bash
-$ python3 -m pip install cryptography datetime
+$ python3 -m pip install cryptography==40.0.2 datetime
 ```
 
 # Help
