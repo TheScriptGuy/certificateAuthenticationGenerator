@@ -209,8 +209,17 @@ def write_private_key_to_file(
                     encryption_algorithm=serialization.NoEncryption()
                 )
             )
-    except:
-        # Could not write to file.
+    except PermissionError:
+        print("You don't have the permissions to write to this file.")
+        successful_write = False
+    except IsADirectoryError:
+        print("The specified path is a directory, not a file.")
+        successful_write = False
+    except IOError as e:
+        print(f"An I/O error occurred: {e}")
+        successful_write = False
+    except OSError as e:
+        print(f"An OS error occurred: {e}")
         successful_write = False
 
     return successful_write
@@ -231,9 +240,19 @@ def write_public_key_to_file(
                     encoding=serialization.Encoding.PEM,
                 )
             )
-    except:
-        # Could not write to file.
+    except PermissionError:
+        print("You don't have the permissions to write to this file.")
         successful_write = False
+    except IsADirectoryError:
+        print("The specified path is a directory, not a file.")
+        successful_write = False
+    except IOError as e:
+        print(f"An I/O error occurred: {e}")
+        successful_write = False
+    except OSError as e:
+        print(f"An OS error occurred: {e}")
+        successful_write = False
+
 
     return successful_write
 
@@ -415,6 +434,37 @@ def write_client_private_key(
     return successful_write
 
 
+def write_client_private_key(
+        __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
+        __filename: str
+        ) -> bool:
+    """Writes the client private key to __filename."""
+    successful_write = True
+
+    try:
+        with open(__filename, "wb") as f_clientPrivateKey:
+            f_clientPrivateKey.write(
+                __private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                )
+            )
+    except PermissionError:
+        print("You don't have the permissions to write to this file.")
+        successful_write = False
+    except IsADirectoryError:
+        print("The specified path is a directory, not a file.")
+        successful_write = False
+    except IOError as e:
+        print(f"An I/O error occurred: {e}")
+        successful_write = False
+    except OSError as e:
+        print(f"An OS error occurred: {e}")
+        successful_write = False
+
+    return successful_write
+
 def write_client_public_key(
         __public_key: CryptographySupport.CryptographySupport.PUBLIC_KEY_TYPES,
         __filename: str
@@ -430,7 +480,17 @@ def write_client_public_key(
                     format=serialization.PublicFormat.SubjectPublicKeyInfo
                 )
             )
-    except:
+    except PermissionError:
+        print("You don't have the permissions to write to this file.")
+        successful_write = False
+    except IsADirectoryError:
+        print("The specified path is a directory, not a file.")
+        successful_write = False
+    except IOError as e:
+        print(f"An I/O error occurred: {e}")
+        successful_write = False
+    except OSError as e:
+        print(f"An OS error occurred: {e}")
         successful_write = False
 
     return successful_write
