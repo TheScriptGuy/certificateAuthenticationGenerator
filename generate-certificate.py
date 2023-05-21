@@ -276,6 +276,7 @@ def write_rootca_pkcs12(
     if args.windowsInstallation:
         printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
+
 def createRootCA(__certificateMetaData: dict) -> None:
     """Create a Root CA with the information from the --companyName argument."""
     # First check to see if the --ecc argument was passed. If passed, generate ECC key.
@@ -409,6 +410,7 @@ def write_client_certificate_pkcs12(
     if args.windowsInstallation:
         printWindowsInstallationInstructions(__certificateMetaData, newPassphrase)
 
+
 def write_client_private_key(
         __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
         __filename: str
@@ -436,6 +438,7 @@ def write_client_private_key(
         successful_write = False
 
     return successful_write
+
 
 def write_client_public_key(
         __public_key: CryptographySupport.CryptographySupport.PUBLIC_KEY_TYPES,
