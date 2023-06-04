@@ -1,3 +1,7 @@
+# 2023-05-31
+## Version 1.07
+* Adjusting code to align with better coding practices.
+
 # 2023-05-21
 ## Version 1.06
 * Adjusting code to align with better coding practices.

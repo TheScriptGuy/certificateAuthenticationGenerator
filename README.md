@@ -29,7 +29,7 @@ $ python3 generate-certificate.py -h
 usage: generate-certificate.py [-h] [--companyName COMPANYNAME] [--generateRootCA] [--generateClientCertificate] [--generatePKCS12]
                                [--nonRestrictiveRootCA] [--ecc] [--removeAllCertsAndKeys] [--windowsInstallation]
 
-Certificate Generation v1.06
+Certificate Generation v1.07
 
 options:
   -h, --help            show this help message and exit
@@ -154,7 +154,6 @@ My recommendation is to leave the following fields:
 
 If you'd like to edit how the certificates are generated, you can edit this dict within `def certificateMetaData`:
 ```python
-    # Root Certificate Authority information. Edit at your own risk.
     certificateInfo["RootCA"] = {
         "oid": {
             "CN": args.companyName + " Root CA",
@@ -181,7 +180,8 @@ If you'd like to edit how the certificates are generated, you can edit this dict
             "digest": "sha512"
         },
         "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+            "keyUsage": ["digitalSignature", "nonRepudiation", "keyCertSign"],
+            "extendedKeyUsage": ["clientAuth"]
         }
     }
 
@@ -210,8 +210,8 @@ If you'd like to edit how the certificates are generated, you can edit this dict
             "digest": "sha256"
         },
         "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation",
-            "extendedKeyUsage": "clientAuth"
+            "keyUsage": ["digitalSignature", "nonRepudiation"],
+            "extendedKeyUsage": ["clientAuth"]
         }
     }
 ```

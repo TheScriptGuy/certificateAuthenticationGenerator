@@ -20,7 +20,7 @@ class CryptographyFileOperations:
     CLASS_VERSION = 0.01
 
     @staticmethod
-    def generatePassphrase(__passwordLength: int):
+    def generatePassphrase(__passwordLength: int) -> str:
         """Generate a random password based on the length supplied."""
         # Define the valid letters for the password.
         validLetters = "abcdefghijklmnopqrstuvwxyz"
@@ -35,7 +35,6 @@ class CryptographyFileOperations:
         newPassphrase = "".join(random.choice(validCharacters) for i in range(__passwordLength))
 
         return newPassphrase
-
 
     @staticmethod
     def remove_all_certs_and_keys():
@@ -166,6 +165,7 @@ class CryptographyFileOperations:
 
         return newPassphrase
 
+    @staticmethod
     def write_client_private_key(
             __private_key: CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES,
             __filename: str
@@ -194,7 +194,7 @@ class CryptographyFileOperations:
 
         return successful_write
 
-
+    @staticmethod
     def write_client_public_key(
             __public_key: CryptographySupport.CryptographySupport.PUBLIC_KEY_TYPES,
             __filename: str
