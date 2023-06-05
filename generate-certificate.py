@@ -1,7 +1,7 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
-# Last modified:   2023-05-21
-# Version:         1.06
+# Last modified:   2023-05-31
+# Version:         1.07
 
 from cryptography import x509
 
@@ -17,7 +17,7 @@ import os
 import argparse
 import random
 
-scriptVersion = "1.06"
+scriptVersion = "1.07"
 
 
 def certificateMetaData():
@@ -60,7 +60,8 @@ def certificateMetaData():
             "digest": "sha512"
         },
         "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation, keyCertSign",
+            "keyUsage": ["digitalSignature", "nonRepudiation", "keyCertSign"],
+            "extendedKeyUsage": ["clientAuth"]
         }
     }
 
@@ -89,8 +90,8 @@ def certificateMetaData():
             "digest": "sha256"
         },
         "extensions": {
-            "keyUsage": "digitalSignature, nonRepudiation",
-            "extendedKeyUsage": "clientAuth"
+            "keyUsage": ["digitalSignature", "nonRepudiation"],
+            "extendedKeyUsage": ["clientAuth"]
         }
     }
 
@@ -153,20 +154,43 @@ def printWindowsInstallationInstructions(
     print(f"C:\\>certutil -importpfx -f -Enterprise -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
 
 
-def createRootCA(__certificateMetaData: dict) -> None:
-    """Create a Root CA with the information from the --companyName argument."""
+def create_root_private_keys(__certificateMetaData: dict) -> CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES:
+    """Create a private key."""
     # First check to see if the --ecc argument was passed. If passed, generate ECC key.
     if args.ecc:
-        rootCAPrivateKey = ec.generate_private_key(
+        __private_key = ec.generate_private_key(
             curve=CryptographySupport.CryptographySupport.generate_curve(__certificateMetaData["RootCA"]["ecc"]["curve"]),
             backend=default_backend()
         )
     else:
-        rootCAPrivateKey = rsa.generate_private_key(
+        __private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=__certificateMetaData["RootCA"]["rsa"]["rsa_bits"],
             backend=default_backend()
         )
+    return __private_key
+
+
+def create_client_private_keys(__certificateMetaData: dict) -> CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES:
+    """Create a private key."""
+    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
+    if args.ecc:
+        __private_key = ec.generate_private_key(
+            curve=CryptographySupport.CryptographySupport.generate_curve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
+            backend=default_backend()
+        )
+    else:
+        __private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=__certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"],
+            backend=default_backend()
+        )
+    return __private_key
+
+
+def createRootCA(__certificateMetaData: dict) -> None:
+    """Create a Root CA with the information from the --companyName argument."""
+    rootCAPrivateKey = create_root_private_keys(__certificateMetaData)
 
     rootCAPublicKey = rootCAPrivateKey.public_key()
     rootCACertificateBuilder = x509.CertificateBuilder()
@@ -208,9 +232,12 @@ def createRootCA(__certificateMetaData: dict) -> None:
             rootCAKeyUsage, True
         )
 
+        # Create the ExtendedKeyUsage list
+        rootCAExtendedKeyUsage = CryptographySupport.CryptographySupport.build_extended_key_usage(__certificateMetaData['RootCA'])
+
         # Add extension for only allowing CA to do Client Authentication
         rootCACertificateBuilder = rootCACertificateBuilder.add_extension(
-            x509.ExtendedKeyUsage([x509.OID_CLIENT_AUTH]), critical=True
+            x509.ExtendedKeyUsage(rootCAExtendedKeyUsage), critical=True
         )
 
     # Apply basic constraints to certificate.
@@ -271,22 +298,12 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
     """Create the client certificate and sign it from the root CA created from createRootCA()"""
     check_root_ca_files_exist(__certificateMetaData)
 
-    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
-    if args.ecc:
-        clientPrivateKey = ec.generate_private_key(
-            curve=CryptographySupport.CryptographySupport.generate_curve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
-            backend=default_backend()
-        )
-    else:
-        clientPrivateKey = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=__certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"],
-            backend=default_backend()
-        )
+    clientPrivateKey = create_client_private_keys(__certificateMetaData)
 
     clientPublicKey = clientPrivateKey.public_key()
 
     clientNameAttributes = CryptographySupport.CryptographySupport.build_name_attribute(__certificateMetaData['ClientAuthentication'])
+    
     clientCertificateBuilder = x509.CertificateBuilder()
     clientCertificateBuilder = clientCertificateBuilder.subject_name(x509.Name(clientNameAttributes))
 
@@ -305,8 +322,11 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
     clientCertificateBuilder = clientCertificateBuilder.add_extension(
         x509.BasicConstraints(ca=True, path_length=0), critical=True
     )
+
+    # Add extended key usage extensions to the certificate
+    clientCertificateExtendedKeyUsage = CryptographySupport.CryptographySupport.build_extended_key_usage(__certificateMetaData['ClientAuthentication'])
     clientCertificateBuilder = clientCertificateBuilder.add_extension(
-        x509.ExtendedKeyUsage([x509.OID_CLIENT_AUTH]), critical=True
+        x509.ExtendedKeyUsage(clientCertificateExtendedKeyUsage), critical=True
     )
 
     # Load Root CA Key

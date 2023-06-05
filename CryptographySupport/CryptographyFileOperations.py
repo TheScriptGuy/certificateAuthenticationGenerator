@@ -21,7 +21,7 @@ class CryptographyFileOperations:
     CLASS_VERSION = 0.01
 
     @staticmethod
-    def generatePassphrase(__passwordLength: int):
+    def generatePassphrase(__passwordLength: int) -> str:
         """Generate a random password based on the length supplied."""
         # Define the valid letters for the password.
         validLetters = "abcdefghijklmnopqrstuvwxyz"

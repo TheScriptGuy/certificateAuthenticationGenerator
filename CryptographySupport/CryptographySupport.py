@@ -1,12 +1,12 @@
 # Description:           Cryptography support
 # Author:                TheScriptGuy
-# Last modified:         2023-05-20
-# Version:               0.01
+# Last modified:         2023-05-31
+# Version:               0.02
 
 from typing import Union
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
 from cryptography import x509
 
 
@@ -15,7 +15,7 @@ class CryptographySupport:
 
     PRIVATE_KEY_TYPES = Union[rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey]
     PUBLIC_KEY_TYPES = Union[rsa.RSAPublicKey, ec.EllipticCurvePublicKey]
-    CLASS_VERSION = "0.01"
+    CLASS_VERSION = "0.02"
 
     @staticmethod
     def generate_hash(__hash: str) -> hashes.HashAlgorithm:
@@ -97,6 +97,30 @@ class CryptographySupport:
                 name_attribute_list.append(x509.NameAttribute(oid_mapping[item], value))
 
         return name_attribute_list
+
+    @staticmethod
+    def build_extended_key_usage(certificateAttributes: dict) -> list:
+        """Build Extended Key Usage list from certificateAttributes."""
+        attribute_mapping = {
+            "clientAuth": ExtendedKeyUsageOID.CLIENT_AUTH,
+            "serverAuth": ExtendedKeyUsageOID.SERVER_AUTH,
+            "codeSigning": ExtendedKeyUsageOID.CODE_SIGNING,
+            "emailProtection": ExtendedKeyUsageOID.EMAIL_PROTECTION,
+            "timeStamping": ExtendedKeyUsageOID.TIME_STAMPING,
+            "ocspSigning": ExtendedKeyUsageOID.OCSP_SIGNING,
+            "anyExtendedKeyUsage": ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE
+        }
+
+        attribute_list = []
+
+        for value in certificateAttributes['extensions']['extendedKeyUsage']:
+            if value is None:
+                continue
+            elif value in attribute_mapping:
+                attribute_list.append(attribute_mapping[value])
+
+        return attribute_list
+
 
     def __init__(self):
         """Initialize the class."""
