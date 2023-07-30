@@ -91,8 +91,9 @@ class CryptographySupport:
             if value is None:
                 continue
             elif item == "domainComponent" and value != [None]:
-                for dc in value:
-                    name_attribute_list.append(x509.NameAttribute(oid_mapping[item], dc))
+                name_attribute_list.extend(
+                    x509.NameAttribute(oid_mapping[item], dc) for dc in value
+                )
             elif item in oid_mapping and item != "domainComponent":
                 name_attribute_list.append(x509.NameAttribute(oid_mapping[item], value))
 

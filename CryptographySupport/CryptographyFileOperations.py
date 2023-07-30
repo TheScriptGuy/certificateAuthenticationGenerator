@@ -26,16 +26,10 @@ class CryptographyFileOperations:
         # Define the valid letters for the password.
         validLetters = "abcdefghijklmnopqrstuvwxyz"
 
-        # Define the valid numbers for the password.
-        validNumbers = "0123456789"
-
         # Combine the list of valid letters and numbers
-        validCharacters = validLetters + validNumbers
+        validCharacters = f"{validLetters}0123456789"
 
-        # Create a new password based off validCharacters and the length defined by __passwordLength
-        newPassphrase = "".join(random.choice(validCharacters) for i in range(__passwordLength))
-
-        return newPassphrase
+        return "".join(random.choice(validCharacters) for _ in range(__passwordLength))
 
     @staticmethod
     def remove_all_certs_and_keys():
