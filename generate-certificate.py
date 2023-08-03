@@ -358,7 +358,7 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
             )
         else:
             # The required key: value pair was not set. Print error message and exit.
-            print(f"The required key: value pair was not set for DNSName.")
+            print("The required key: value pair was not set for DNSName.")
             sys.exit(1)
 
     if args.userPrincipalName:
@@ -376,7 +376,7 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
             )
         else:
             # The required key: value pair was not set. Print error message and exit.
-            print(f"The required key: value pair was not set for userPrincipalName.")
+            print("The required key: value pair was not set for userPrincipalName.")
             sys.exit(1)
 
     # Load Root CA Key
@@ -445,7 +445,7 @@ def main():
     # Can only be --dnsName or --userPrincipalName, but not both. Exit if true.
     if args.dnsName and args.userPrincipalName:
         # Print an error message and exit.
-        print(f"Please use either --dnsName or --userPrincipalName, but not both.")
+        print("Please use either --dnsName or --userPrincipalName, but not both.")
         sys.exit(1)
 
     # Check to see if Root CA needs to be generated.
