@@ -26,8 +26,6 @@ scriptVersion = "1.08"
 
 def certificateMetaData():
     """Generate certificate structure based on supplied information."""
-    certificateInfo = {}
-
     # Let's normalize the companyName - only leave numbers and letters
     normalizedName = ''.join(filter(lambda x: x.isalpha() or x.isspace() or x.isdigit(), args.companyName))
 
@@ -37,38 +35,43 @@ def certificateMetaData():
     # Replace spaces with hyphens for Client Certificate information.
     clientCertificateFileName = "client-cert-" + normalizedName.replace(' ', '-').lower()
 
-    # Root Certificate Authority information. Edit at your own risk.
-    certificateInfo["RootCA"] = {
-        "oid": {
-            "CN": args.companyName + " Root CA",
-            "companyName": args.companyName,
-            "organizationalUnit": "Client Authentication CA",
-            "locality": None,
-            "stateOrProvince": None,
-            "organizationName": None,
-            "countryName": None,
-            "domainComponent": [None],
-        },
-        "rootCAFileName": rootCAFileName,
-        "rootCAPublicKey": f"{rootCAFileName}.crt",
-        "rootCAPrivateKey": f"{rootCAFileName}.key",
-        "rootCAPKCS12": f"{rootCAFileName}.p12",
-        "notBefore": datetime.datetime.today(),
-        "notAfter": datetime.datetime.today() + datetime.timedelta(seconds=31536000),
-        "rsa": {
-            "rsa_bits": 2048,
-            "digest": "sha512",
-        },
-        "ecc": {
-            "curve": "secp256r1",
-            "digest": "sha512",
-        },
-        "extensions": {
-            "keyUsage": ["digitalSignature", "nonRepudiation", "keyCertSign"],
-            "extendedKeyUsage": ["clientAuth"],
+    certificateInfo = {
+        "RootCA": {
+            "oid": {
+                "CN": f"{args.companyName} Root CA",
+                "companyName": args.companyName,
+                "organizationalUnit": "Client Authentication CA",
+                "locality": None,
+                "stateOrProvince": None,
+                "organizationName": None,
+                "countryName": None,
+                "domainComponent": [None],
+            },
+            "rootCAFileName": rootCAFileName,
+            "rootCAPublicKey": f"{rootCAFileName}.crt",
+            "rootCAPrivateKey": f"{rootCAFileName}.key",
+            "rootCAPKCS12": f"{rootCAFileName}.p12",
+            "notBefore": datetime.datetime.now(),
+            "notAfter": datetime.datetime.now()
+            + datetime.timedelta(seconds=31536000),
+            "rsa": {
+                "rsa_bits": 2048,
+                "digest": "sha512",
+            },
+            "ecc": {
+                "curve": "secp256r1",
+                "digest": "sha512",
+            },
+            "extensions": {
+                "keyUsage": [
+                    "digitalSignature",
+                    "nonRepudiation",
+                    "keyCertSign",
+                ],
+                "extendedKeyUsage": ["clientAuth"],
+            },
         }
     }
-
     # Client Authentication certificate information. Edit at your own risk.
     certificateInfo["ClientAuthentication"] = {
         "oid": {
@@ -82,13 +85,14 @@ def certificateMetaData():
             "subjectAlternativeName": {
                 "DNSName": None,
                 "userPrincipalName": None,
-            }
+            },
         },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
         "clientCertificatePKCS12": f"{clientCertificateFileName}.p12",
-        "notBefore": datetime.datetime.today(),
-        "notAfter": datetime.datetime.today() + datetime.timedelta(seconds=31536000),
+        "notBefore": datetime.datetime.now(),
+        "notAfter": datetime.datetime.now()
+        + datetime.timedelta(seconds=31536000),
         "rsa": {
             "rsa_bits": 2048,
             "digest": "sha256",
@@ -100,7 +104,7 @@ def certificateMetaData():
         "extensions": {
             "keyUsage": ["digitalSignature", "nonRepudiation"],
             "extendedKeyUsage": ["clientAuth"],
-        }
+        },
     }
 
     return certificateInfo
@@ -109,7 +113,9 @@ def certificateMetaData():
 def parseArguments():
     """Create argument options and parse through them to determine what to do with script."""
     # Instantiate the parser
-    parser = argparse.ArgumentParser(description='Certificate Generation v' + scriptVersion)
+    parser = argparse.ArgumentParser(
+        description=f'Certificate Generation v{scriptVersion}'
+    )
 
     # Optional arguments
     parser.add_argument('--companyName', default='ACME Corp',
@@ -170,36 +176,40 @@ def printWindowsInstallationInstructions(
 
 def create_root_private_keys(__certificateMetaData: dict) -> CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES:
     """Create a private key."""
-    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
-    if args.ecc:
-        __private_key = ec.generate_private_key(
-            curve=CryptographySupport.CryptographySupport.generate_curve(__certificateMetaData["RootCA"]["ecc"]["curve"]),
-            backend=default_backend()
+    return (
+        ec.generate_private_key(
+            curve=CryptographySupport.CryptographySupport.generate_curve(
+                __certificateMetaData["RootCA"]["ecc"]["curve"]
+            ),
+            backend=default_backend(),
         )
-    else:
-        __private_key = rsa.generate_private_key(
+        if args.ecc
+        else rsa.generate_private_key(
             public_exponent=65537,
             key_size=__certificateMetaData["RootCA"]["rsa"]["rsa_bits"],
-            backend=default_backend()
+            backend=default_backend(),
         )
-    return __private_key
+    )
 
 
 def create_client_private_keys(__certificateMetaData: dict) -> CryptographySupport.CryptographySupport.PRIVATE_KEY_TYPES:
     """Create a private key."""
-    # First check to see if the --ecc argument was passed. If passed, generate ECC key.
-    if args.ecc:
-        __private_key = ec.generate_private_key(
-            curve=CryptographySupport.CryptographySupport.generate_curve(__certificateMetaData["ClientAuthentication"]["ecc"]["curve"]),
-            backend=default_backend()
+    return (
+        ec.generate_private_key(
+            curve=CryptographySupport.CryptographySupport.generate_curve(
+                __certificateMetaData["ClientAuthentication"]["ecc"]["curve"]
+            ),
+            backend=default_backend(),
         )
-    else:
-        __private_key = rsa.generate_private_key(
+        if args.ecc
+        else rsa.generate_private_key(
             public_exponent=65537,
-            key_size=__certificateMetaData["ClientAuthentication"]["rsa"]["rsa_bits"],
-            backend=default_backend()
+            key_size=__certificateMetaData["ClientAuthentication"]["rsa"][
+                "rsa_bits"
+            ],
+            backend=default_backend(),
         )
-    return __private_key
+    )
 
 
 def createRootCA(__certificateMetaData: dict) -> None:
@@ -283,14 +293,10 @@ def createRootCA(__certificateMetaData: dict) -> None:
         print(f"Error writing to file {__certificateMetaData['RootCA']['rootCAPublicKey']}")
         sys.exit(1)
 
-    if args.generatePKCS12:
-        # Generate a PKCS12 file for the Root CA.
-        root_ca_passphrase = CryptographyFileOperations.CryptographyFileOperations.write_rootca_pkcs12(
-            __certificateMetaData,
-            rootCAPrivateKey,
-            rootCACertificate
-        )
-        if root_ca_passphrase:
+    if root_ca_passphrase := CryptographyFileOperations.CryptographyFileOperations.write_rootca_pkcs12(
+        __certificateMetaData, rootCAPrivateKey, rootCACertificate
+    ):
+        if args.generatePKCS12:
             print(f"Password for {__certificateMetaData['RootCA']['rootCAPKCS12']} is {root_ca_passphrase}")
 
             if args.windowsInstallation:
@@ -437,7 +443,11 @@ def main():
     myCertMetaData = certificateMetaData()
 
     # Adding logic handling for when only --companyName is passed.
-    if args.companyName and not (args.generateRootCA or args.generateClientCertificate):
+    if (
+        args.companyName
+        and not args.generateRootCA
+        and not args.generateClientCertificate
+    ):
         print("Missing --generateRootCA or --generateClientCertificate Argument.")
         sys.exit(1)
 
