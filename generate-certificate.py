@@ -1,9 +1,12 @@
 # Description:     Create a Root CA with a client Authentication certificate that's signed by the Root CA.
 # Author:          TheScriptGuy
-# Last modified:   2023-05-31
-# Version:         1.07
+# Last modified:   2023-08-02
+# Version:         1.08
 
 from cryptography import x509
+
+from pyasn1.type import char
+from pyasn1.codec.der import encoder as der_encoder
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -16,8 +19,9 @@ import sys
 import os
 import argparse
 import random
+import idna
 
-scriptVersion = "1.07"
+scriptVersion = "1.08"
 
 
 def certificateMetaData():
@@ -43,7 +47,7 @@ def certificateMetaData():
             "stateOrProvince": None,
             "organizationName": None,
             "countryName": None,
-            "domainComponent": [None]
+            "domainComponent": [None],
         },
         "rootCAFileName": rootCAFileName,
         "rootCAPublicKey": f"{rootCAFileName}.crt",
@@ -57,11 +61,11 @@ def certificateMetaData():
         },
         "ecc": {
             "curve": "secp256r1",
-            "digest": "sha512"
+            "digest": "sha512",
         },
         "extensions": {
             "keyUsage": ["digitalSignature", "nonRepudiation", "keyCertSign"],
-            "extendedKeyUsage": ["clientAuth"]
+            "extendedKeyUsage": ["clientAuth"],
         }
     }
 
@@ -74,7 +78,11 @@ def certificateMetaData():
             "stateOrProvince": None,
             "organizationName": None,
             "countryName": None,
-            "domainComponent": [None]
+            "domainComponent": [None],
+            "subjectAlternativeName": {
+                "DNSName": None,
+                "userPrincipalName": None,
+            }
         },
         "clientCertificatePublicKey": f"{clientCertificateFileName}.crt",
         "clientCertificatePrivateKey": f"{clientCertificateFileName}.key",
@@ -87,11 +95,11 @@ def certificateMetaData():
         },
         "ecc": {
             "curve": "secp256r1",
-            "digest": "sha256"
+            "digest": "sha256",
         },
         "extensions": {
             "keyUsage": ["digitalSignature", "nonRepudiation"],
-            "extendedKeyUsage": ["clientAuth"]
+            "extendedKeyUsage": ["clientAuth"],
         }
     }
 
@@ -122,6 +130,12 @@ def parseArguments():
     parser.add_argument('--ecc', action='store_true',
                         help='Use Elliptic Curves in preference to RSA.')
 
+    parser.add_argument('--dnsName', action='store_true',
+                        help='Add a Subject Alternative Name (SAN) for the DNS hostname.')
+
+    parser.add_argument('--userPrincipalName', action='store_true',
+                        help='Add a Subject Alternative Name (SAN) for the Windows User Principal Name (UPN).')
+
     parser.add_argument('--removeAllCertsAndKeys', action='store_true',
                         help='Removes all files matching wildcard *.crt, *.key, *.p12. USE WITH CAUTION.')
 
@@ -134,10 +148,10 @@ def parseArguments():
 
 def printDisclaimer():
     """Disclaimer for using the certificates."""
-    print("----------------------------------------------------------------------------")
+    print("-" * 76)
     print("DISCLAIMER:")
     print("These files are not meant for production environments. Use at your own risk.")
-    print("----------------------------------------------------------------------------")
+    print("-" * 76)
 
 
 def printWindowsInstallationInstructions(
@@ -145,7 +159,7 @@ def printWindowsInstallationInstructions(
         __p12Password: str
         ) -> None:
     """Display the installation instructions for Windows."""
-    print("----------------------------------------------------------------------------")
+    print("-" * 76)
     print("Windows Installation (from the directory where files are stored):")
     print("To install Client Authentication certificate into User certificate store (in both cases, click yes to install Root CA as well):")
     print(f"C:\\>certutil -importpfx -f -user -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
@@ -303,7 +317,7 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
     clientPublicKey = clientPrivateKey.public_key()
 
     clientNameAttributes = CryptographySupport.CryptographySupport.build_name_attribute(__certificateMetaData['ClientAuthentication'])
-    
+
     clientCertificateBuilder = x509.CertificateBuilder()
     clientCertificateBuilder = clientCertificateBuilder.subject_name(x509.Name(clientNameAttributes))
 
@@ -320,7 +334,7 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
 
     # Create a list of extensions to be added to certificate.
     clientCertificateBuilder = clientCertificateBuilder.add_extension(
-        x509.BasicConstraints(ca=True, path_length=0), critical=True
+        x509.BasicConstraints(ca=False, path_length=None), critical=True
     )
 
     # Add extended key usage extensions to the certificate
@@ -328,6 +342,42 @@ def create_client_certificate(__certificateMetaData: dict) -> None:
     clientCertificateBuilder = clientCertificateBuilder.add_extension(
         x509.ExtendedKeyUsage(clientCertificateExtendedKeyUsage), critical=True
     )
+
+    # Add Subject Alternative Name extensions
+    if args.dnsName:
+        # The DNSName needs to be attached to the Subject Alternative Name.
+
+        # First check to see if the dnsName has been defined in the dict.
+        if __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['DNSName'] is not None:
+            __dnsName = __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['DNSName']
+            __a_dnsName = idna.encode(__dnsName).decode('ascii')
+            clientCertificateBuilder = clientCertificateBuilder.add_extension(
+                x509.SubjectAlternativeName(
+                    [x509.DNSName(__a_dnsName)]
+                    ), critical=False
+            )
+        else:
+            # The required key: value pair was not set. Print error message and exit.
+            print(f"The required key: value pair was not set for DNSName.")
+            sys.exit(1)
+
+    if args.userPrincipalName:
+        # The User Principal Name needs to be attached to the Subject Alternative Name.
+        if __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['userPrincipalName'] is not None:
+            # UPN field
+            upn_value = __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['userPrincipalName']
+            upn_value = der_encoder.encode(char.UTF8String(upn_value))  # ASN.1 DER encoding
+            upn_field = x509.OtherName(x509.oid.ObjectIdentifier('1.3.6.1.4.1.311.20.2.3'), upn_value)
+
+            clientCertificateBuilder = clientCertificateBuilder.add_extension(
+                x509.SubjectAlternativeName(
+                    [upn_field]
+                    ), critical=False
+            )
+        else:
+            # The required key: value pair was not set. Print error message and exit.
+            print(f"The required key: value pair was not set for userPrincipalName.")
+            sys.exit(1)
 
     # Load Root CA Key
     with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "rb") as f_rootCAKeyFile:
@@ -389,6 +439,13 @@ def main():
     # Adding logic handling for when only --companyName is passed.
     if args.companyName and not (args.generateRootCA or args.generateClientCertificate):
         print("Missing --generateRootCA or --generateClientCertificate Argument.")
+        sys.exit(1)
+
+    # First check to see if only one argument was passed
+    # Can only be --dnsName or --userPrincipalName, but not both. Exit if true.
+    if args.dnsName and args.userPrincipalName:
+        # Print an error message and exit.
+        print(f"Please use either --dnsName or --userPrincipalName, but not both.")
         sys.exit(1)
 
     # Check to see if Root CA needs to be generated.

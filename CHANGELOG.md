@@ -1,3 +1,8 @@
+# 2023-08-02
+## Version 1.08
+* Adding enhancement for [Subject Alternative Names](https://github.com/TheScriptGuy/certificateAuthenticationGenerator/issues/8)
+* Inadvertently identifying (and now fixed) a flaw in my Client Certificate Authentication generator.
+
 # 2023-05-31
 ## Version 1.07
 * Adjusting code to align with better coding practices.
