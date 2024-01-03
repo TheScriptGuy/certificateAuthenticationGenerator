@@ -1,3 +1,7 @@
+# 2024-01-03
+## Version 1.09
+* Making the code more modular and aligning with better coding practices.
+
 # 2023-08-02
 ## Version 1.08
 * Adding enhancement for [Subject Alternative Names](https://github.com/TheScriptGuy/certificateAuthenticationGenerator/issues/8)
