@@ -1,0 +1,24 @@
+{
+    "oid": {
+        "CN": null,
+        "companyName": null,
+        "organizationalUnit": "Client Authentication CA",
+        "locality": null,
+        "stateOrProvince": null,
+        "organizationName": null,
+        "countryName": null,
+        "domainComponent": [null]
+    },
+    "rsa": {
+        "rsa_bits": 2048,
+        "digest": "sha512"
+    },
+    "ecc": {
+        "curve": "secp256r1",
+        "digest": "sha512"
+    },
+    "extensions": {
+        "keyUsage": ["digitalSignature", "nonRepudiation", "keyCertSign"],
+        "extendedKeyUsage": ["clientAuth"]
+    }
+}
