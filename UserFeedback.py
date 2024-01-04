@@ -1,9 +1,10 @@
 class UserFeedback:
     """A class for providing output to stdout."""
+
     CLASS_VERSION = "0.01"
     AUTHOR = "TheScriptGuy"
     LAST_MODIFIED = "2024-01-03"
-    
+
     header = "-" * 76
 
     def print_line(line: str = "") -> None:
@@ -31,4 +32,3 @@ class UserFeedback:
         print()
         print("To install certificate into Local Machine certificate store:")
         print(f"C:\\>certutil -importpfx -f -Enterprise -p {__p12Password} {__certificateInfo['ClientAuthentication']['clientCertificatePKCS12']} NoExport")
-

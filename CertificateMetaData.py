@@ -4,9 +4,8 @@ import os
 
 
 class CertificateMetaData:
-    """
-    A class to manage and generate certificate metadata based on supplied information from JSON files.
-    """
+    """A class to manage and generate certificate metadata based on supplied information from JSON files."""
+
     CLASS_VERSION = "0.01"
     AUTHOR = "TheScriptGuy"
     LAST_MODIFIED = "2024-01-03"
@@ -76,4 +75,3 @@ class CertificateMetaData:
         self.certificate_info["ClientAuthentication"]["clientCertificatePublicKey"] = f"{client_cert_file_name}.crt"
         self.certificate_info["ClientAuthentication"]["clientCertificatePrivateKey"] = f"{client_cert_file_name}.key"
         self.certificate_info["ClientAuthentication"]["clientCertificatePKCS12"] = f"{client_cert_file_name}.p12"
-

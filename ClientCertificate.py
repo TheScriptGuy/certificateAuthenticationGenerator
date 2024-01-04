@@ -18,6 +18,7 @@ from UserFeedback import UserFeedback
 
 class ClientCertificate:
     """A class used for creating client certificates."""
+
     CLASS_VERSION = "0.01"
     AUTHOR = "TheScriptGuy"
     LAST_MODIFIED = "2024-01-03"

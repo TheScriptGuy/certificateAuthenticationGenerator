@@ -11,6 +11,7 @@ from cryptography import x509
 
 class RootCertificateAuthority:
     """This class is used for Root Certificate Authority Operations."""
+
     CLASS_VERSION = "0.01"
     AUTHOR = "TheScriptGuy"
     LAST_MODIFIED = "2024-01-03"
