@@ -167,7 +167,7 @@ My recommendation is to leave the following fields:
 
 If you'd like to edit how the certificates are generated, there are 2 files that can be edited.
 
-##  Sample `RootCertificateAuthority.json`
+## Sample `RootCertificateAuthority.json`
 ```json
 {
     "oid": {
@@ -195,7 +195,7 @@ If you'd like to edit how the certificates are generated, there are 2 files that
 }
 ```
 
-# Sample `ClientAuthentication.json`
+## Sample `ClientAuthentication.json`
 ```json
 {
     "oid": {
