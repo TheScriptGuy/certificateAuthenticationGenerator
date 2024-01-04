@@ -48,46 +48,46 @@ class ClientCertificate:
                 backend=default_backend()
             )
         return __private_key
-    
+
     def create_client_certificate(__certificateMetaData: dict, **kwargs) -> None:
         """Create the client certificate and sign it from the root CA created from createRootCA()"""
         ClientCertificate.check_root_ca_files_exist(__certificateMetaData)
-    
+
         clientPrivateKey = ClientCertificate.create_client_private_keys(__certificateMetaData, **kwargs)
-    
+
         clientPublicKey = clientPrivateKey.public_key()
-    
+
         clientNameAttributes = CryptographySupport.CryptographySupport.build_name_attribute(__certificateMetaData['ClientAuthentication'])
-    
+
         clientCertificateBuilder = x509.CertificateBuilder()
         clientCertificateBuilder = clientCertificateBuilder.subject_name(x509.Name(clientNameAttributes))
-    
+
         rootCANameAttributes = CryptographySupport.CryptographySupport.build_name_attribute(__certificateMetaData['RootCA'])
         clientCertificateBuilder = clientCertificateBuilder.issuer_name(x509.Name(rootCANameAttributes))
-    
+
         # Generate a random serial number
         clientSerialNumber = random.getrandbits(64)
-    
+
         clientCertificateBuilder = clientCertificateBuilder.not_valid_before(__certificateMetaData["ClientAuthentication"]["notBefore"])
         clientCertificateBuilder = clientCertificateBuilder.not_valid_after(__certificateMetaData["ClientAuthentication"]["notAfter"])
         clientCertificateBuilder = clientCertificateBuilder.serial_number(clientSerialNumber)
         clientCertificateBuilder = clientCertificateBuilder.public_key(clientPublicKey)
-    
+
         # Create a list of extensions to be added to certificate.
         clientCertificateBuilder = clientCertificateBuilder.add_extension(
             x509.BasicConstraints(ca=False, path_length=None), critical=True
         )
-    
+
         # Add extended key usage extensions to the certificate
         clientCertificateExtendedKeyUsage = CryptographySupport.CryptographySupport.build_extended_key_usage(__certificateMetaData['ClientAuthentication'])
         clientCertificateBuilder = clientCertificateBuilder.add_extension(
             x509.ExtendedKeyUsage(clientCertificateExtendedKeyUsage), critical=True
         )
-    
+
         # Add Subject Alternative Name extensions
         if 'dnsName' in kwargs and kwargs['dnsName']:
             # The DNSName needs to be attached to the Subject Alternative Name.
-    
+
             # First check to see if the dnsName has been defined in the dict.
             if __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['DNSName'] is not None:
                 __dnsName = __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['DNSName']
@@ -101,7 +101,7 @@ class ClientCertificate:
                 # The required key: value pair was not set. Print error message and exit.
                 UserFeedback.print_line("The required key: value pair was not set for DNSName.")
                 sys.exit(1)
-    
+
         if 'userPrincipalName' in kwargs and kwargs['userPrincipalName']:
             # The User Principal Name needs to be attached to the Subject Alternative Name.
             if __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['userPrincipalName'] is not None:
@@ -109,7 +109,7 @@ class ClientCertificate:
                 upn_value = __certificateMetaData['ClientAuthentication']['oid']['subjectAlternativeName']['userPrincipalName']
                 upn_value = der_encoder.encode(char.UTF8String(upn_value))  # ASN.1 DER encoding
                 upn_field = x509.OtherName(x509.oid.ObjectIdentifier('1.3.6.1.4.1.311.20.2.3'), upn_value)
-    
+
                 clientCertificateBuilder = clientCertificateBuilder.add_extension(
                     x509.SubjectAlternativeName(
                         [upn_field]
@@ -119,23 +119,23 @@ class ClientCertificate:
                 # The required key: value pair was not set. Print error message and exit.
                 UserFeedback.print_line("The required key: value pair was not set for userPrincipalName.")
                 sys.exit(1)
-    
+
         # Load Root CA Key
         with open(__certificateMetaData["RootCA"]["rootCAPrivateKey"], "rb") as f_rootCAKeyFile:
             rootCAkeyPEM = serialization.load_pem_private_key(f_rootCAKeyFile.read(), password=None)
-    
+
         # Sign the certificate based off the Root CA key.
         clientAuthenticationCertificate = clientCertificateBuilder.sign(
             private_key=rootCAkeyPEM,
             algorithm=CryptographySupport.CryptographySupport.generate_hash(__certificateMetaData["ClientAuthentication"]["rsa"]["digest"]),
             backend=default_backend()
         )
-    
+
         clientPublicKey = clientPrivateKey.public_key()
-    
+
         # Print the disclaimer.
         UserFeedback.print_disclaimer()
-    
+
         # Client the client private key to file.
         if CryptographyFileOperations.CryptographyFileOperations.write_client_private_key(clientPrivateKey, __certificateMetaData["ClientAuthentication"]["clientCertificatePrivateKey"]):
             UserFeedback.print_line(f"Client certificate private key filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
