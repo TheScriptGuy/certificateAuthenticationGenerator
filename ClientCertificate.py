@@ -142,14 +142,14 @@ class ClientCertificate:
         else:
             UserFeedback.print_line(f"Error when writing client private key to {__certificateMetaData['ClientAuthentication']['clientCertificatePrivateKey']}")
             sys.exit(1)
-    
+
         # Write the client certificate to file.
         if CryptographyFileOperations.CryptographyFileOperations.write_client_public_key(clientPublicKey, __certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']):
             UserFeedback.print_line(f"Client certificate filename - {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
         else:
             UserFeedback.print_line(f"Error when writing client public key to {__certificateMetaData['ClientAuthentication']['clientCertificatePublicKey']}")
             sys.exit(1)
-    
+
         if 'generatePKCS12' in kwargs and kwargs['generatePKCS12']:
             # Generate a PKCS12 File for the Client Certificate Authenticate.
             client_certificate_passphrase = CryptographyFileOperations.CryptographyFileOperations.write_client_certificate_pkcs12(
@@ -159,6 +159,6 @@ class ClientCertificate:
             )
             if client_certificate_passphrase:
                 UserFeedback.print_line(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {client_certificate_passphrase}")
-    
+
             if 'windowsInstallation' in kwargs and kwargs['windowsInstallation']:
                 UserFeedback.print_windows_installation_instructions(__certificateMetaData, client_certificate_passphrase) 

@@ -84,21 +84,21 @@ def main():
     if args.generateRootCA and args.companyName:
         RootCertificateAuthority.create_root_ca(
                 myCertMetaData.certificate_info,
-                RestrictiveRootCA = True if not args.nonRestrictiveRootCA else False,
-                generatePKCS12 = True if args.generatePKCS12 else False,
-                ecc = True if args.ecc else False,
-                windowsInstallation = True if args.windowsInstallation else False
+                RestrictiveRootCA=True if not args.nonRestrictiveRootCA else False,
+                generatePKCS12=True if args.generatePKCS12 else False,
+                ecc=True if args.ecc else False,
+                windowsInstallation=True if args.windowsInstallation else False
                 )
 
     # Check to see if Client Certificate needs to be generated.
     if args.generateClientCertificate and args.companyName:
         ClientCertificate.create_client_certificate(
                 myCertMetaData.certificate_info,
-                ecc = True if args.ecc else False,
-                generatePKCS12 = True if args.generatePKCS12 else False,
-                dnsName = True if args.dnsName else False,
-                userPrincipalName = True if args.userPrincipalName else False,
-                windowsInstallation = True if args.windowsInstallation else False
+                ecc=True if args.ecc else False,
+                generatePKCS12=True if args.generatePKCS12 else False,
+                dnsName=True if args.dnsName else False,
+                userPrincipalName=True if args.userPrincipalName else False,
+                windowsInstallation=True if args.windowsInstallation else False
                 )
 
 if __name__ == '__main__':

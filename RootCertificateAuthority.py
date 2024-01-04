@@ -129,5 +129,5 @@ class RootCertificateAuthority:
 
                 if 'windows_installation' in kwargs and kwargs['windows_installation']:
                     UserFeedback.print_windows_installation_instructions(__certificateMetaData, root_ca_passphrase)
-        
+
         UserFeedback.print_line()

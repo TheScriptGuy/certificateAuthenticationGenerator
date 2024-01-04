@@ -68,7 +68,7 @@ class CertificateMetaData:
             self.certificate_info["ClientAuthentication"] = json.load(file)
 
         client_cert_file_name = "client-cert-" + self.normalize_name(self.company_name).replace(' ', '-').lower()
-        
+
         self.certificate_info["ClientAuthentication"]["clientCertificatePublicKey"] = f"{client_cert_file_name}.crt"
         self.certificate_info["ClientAuthentication"]["clientCertificatePrivateKey"] = f"{client_cert_file_name}.key"
         self.certificate_info["ClientAuthentication"]["clientCertificatePKCS12"] = f"{client_cert_file_name}.p12"
