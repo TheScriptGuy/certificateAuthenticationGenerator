@@ -19,7 +19,7 @@ class UserFeedback:
     def print_windows_installation_instructions(
         __certificateInfo: dict,
         __p12Password: str
-        ) -> None:
+            ) -> None:
         """Display the installation instructions for Windows."""
         print(UserFeedback.header)
         print("Windows Installation (from the directory where files are stored):")

@@ -161,4 +161,4 @@ class ClientCertificate:
                 UserFeedback.print_line(f"Password for {__certificateMetaData['ClientAuthentication']['clientCertificatePKCS12']} is {client_certificate_passphrase}")
 
             if 'windowsInstallation' in kwargs and kwargs['windowsInstallation']:
-                UserFeedback.print_windows_installation_instructions(__certificateMetaData, client_certificate_passphrase) 
+                UserFeedback.print_windows_installation_instructions(__certificateMetaData, client_certificate_passphrase)

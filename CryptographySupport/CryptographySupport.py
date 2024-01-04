@@ -121,7 +121,6 @@ class CryptographySupport:
 
         return attribute_list
 
-
     def __init__(self):
         """Initialize the class."""
         self.initialized = True
