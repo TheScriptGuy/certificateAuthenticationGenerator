@@ -13,6 +13,7 @@ import argparse
 
 scriptVersion = "1.10"
 
+
 def parseArguments():
     """Create argument options and parse through them to determine what to do with script."""
     # Instantiate the parser
@@ -84,21 +85,21 @@ def main():
     if args.generateRootCA and args.companyName:
         RootCertificateAuthority.create_root_ca(
                 myCertMetaData.certificate_info,
-                RestrictiveRootCA=True if not args.nonRestrictiveRootCA else False,
-                generatePKCS12=True if args.generatePKCS12 else False,
-                ecc=True if args.ecc else False,
-                windowsInstallation=True if args.windowsInstallation else False
+                RestrictiveRootCA=bool(args.nonRestrictiveRootCA),
+                generatePKCS12=bool(args.generatePKCS12),
+                ecc=bool(args.ecc),
+                windowsInstallation=bool(args.windowsInstallation)
                 )
 
     # Check to see if Client Certificate needs to be generated.
     if args.generateClientCertificate and args.companyName:
         ClientCertificate.create_client_certificate(
                 myCertMetaData.certificate_info,
-                ecc=True if args.ecc else False,
-                generatePKCS12=True if args.generatePKCS12 else False,
-                dnsName=True if args.dnsName else False,
-                userPrincipalName=True if args.userPrincipalName else False,
-                windowsInstallation=True if args.windowsInstallation else False
+                ecc=bool(args.ecc),
+                generatePKCS12=bool(args.generatePKCS12),
+                dnsName=bool(args.dnsName),
+                userPrincipalName=bool(args.userPrincipalName),
+                windowsInstallation=bool(args.windowsInstallation)
                 )
 
 
