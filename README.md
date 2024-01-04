@@ -68,7 +68,7 @@ Root CA private key filename - root-ca-test-inc.key
 ## Generate Root CA with PKCS12 file
 This will create a p12 file with a randomly generated passphrase (outputted to stdout).
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateRootCA --generatePKCS12
+$ python3 generate-certificate.py --companyName "Test123, Inc" --generateRootCA --generatePKCS12
 ----------------------------------------------------------------------------
 DISCLAIMER:
 These files are not meant for production environments. Use at your own risk.
@@ -80,14 +80,14 @@ Password for root-ca-test-inc.p12 is thisisnotreallyapassword
 
 In order to run the below commands, you need to run the `--generateRootCA` argument first. If the Root CA files haven't been generated, an error like this will appear:
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateClientCertificate
+$ python3 generate-certificate.py --companyName "Test123, Inc" --generateClientCertificate
 Root CA public key and private key do not exist.
 Exiting.
 ```
 
 ## Generate Client Certificate
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateClientCertificate
+$ python3 generate-certificate.py --companyName "Test123, Inc" --generateClientCertificate
 ----------------------------------------------------------------------------
 DISCLAIMER:
 These files are not meant for production environments. Use at your own risk.
@@ -98,7 +98,7 @@ Client certificate public key filename - client-cert-test-inc.crt
 
 ## Generate Client Certificate with PKCS12 file
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateClientCertificate --generatePKCS12
+$ python3 generate-certificate.py --companyName "Test123, Inc" --generateClientCertificate --generatePKCS12
 ----------------------------------------------------------------------------
 DISCLAIMER:
 These files are not meant for production environments. Use at your own risk.
@@ -110,7 +110,7 @@ Password for client-cert-test-inc.p12 is thisisnotreallyapassword
 
 ## Generate Client Certificate with PKCS12 file and add Windows Installation Instructions
 ```bash
-$ python3 generate-certificate.py --companyName "Test123,. Inc" --generateClientCertificate --generatePKCS12 --windowsInstallation
+$ python3 generate-certificate.py --companyName "Test123, Inc" --generateClientCertificate --generatePKCS12 --windowsInstallation
 ----------------------------------------------------------------------------
 DISCLAIMER:
 These files are not meant for production environments. Use at your own risk.
@@ -156,18 +156,18 @@ $ python generate-certificate.py --removeAllCertsAndKeys
 WARNING - editing this below is at your own risk. There is no error checking by changing these values and the script will throw back an error if they're not properly defined.
 
 My recommendation is to leave the following fields:
-## Under `RootCA`
+## Under `RootCertificateAuthority.json`
 * `CN`
 * `companyName`
 * `extensions`
 
-## Under `ClientAuthentication`
+## Under `ClientCertificate.json`
 * `CN`
 * `extensions`
 
 If you'd like to edit how the certificates are generated, there are 2 files that can be edited.
 
-# `RootCertificateAuthority.json`
+##  Sample `RootCertificateAuthority.json`
 ```json
 {
     "oid": {
@@ -195,7 +195,7 @@ If you'd like to edit how the certificates are generated, there are 2 files that
 }
 ```
 
-# `ClientAuthentication.json`
+# Sample `ClientAuthentication.json`
 ```json
 {
     "oid": {
