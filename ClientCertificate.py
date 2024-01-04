@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, ec
 
 from UserFeedback import UserFeedback
 
+
 class ClientCertificate:
     """A class used for creating client certificates."""
     CLASS_VERSION = "0.01"

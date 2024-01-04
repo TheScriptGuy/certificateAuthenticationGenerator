@@ -2,10 +2,14 @@ import json
 from datetime import datetime, timedelta
 import os
 
+
 class CertificateMetaData:
     """
     A class to manage and generate certificate metadata based on supplied information from JSON files.
     """
+    CLASS_VERSION = "0.01"
+    AUTHOR = "TheScriptGuy"
+    LAST_MODIFIED = "2024-01-03"
 
     def __init__(self, **kwargs):
         """Initialize the class and attempt to load certificate information."""

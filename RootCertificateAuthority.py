@@ -8,6 +8,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography import x509
 
+
 class RootCertificateAuthority:
     """This class is used for Root Certificate Authority Operations."""
     CLASS_VERSION = "0.01"

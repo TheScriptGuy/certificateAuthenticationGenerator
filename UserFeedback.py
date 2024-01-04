@@ -1,6 +1,9 @@
 class UserFeedback:
     """A class for providing output to stdout."""
     CLASS_VERSION = "0.01"
+    AUTHOR = "TheScriptGuy"
+    LAST_MODIFIED = "2024-01-03"
+    
     header = "-" * 76
 
     def print_line(line: str = "") -> None:
